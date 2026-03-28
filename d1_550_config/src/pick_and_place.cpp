@@ -108,6 +108,7 @@ mtc::Task MTCTaskNode::createTask()
 
   const auto& arm_group_name  = "d1_arm";
   const auto& hand_group_name = "d1_gripper";
+  const auto& full_group_name = "d1_full";
   const auto& hand_frame      = "Empty_Link6";
   // En el SRDF: <end_effector name="gripper" ... group="d1_gripper"/>
   // "eef" debe ser el atributo name=, no el group=

@@ -21,7 +21,7 @@ project(d1_550_description)
 find_package(ament_cmake REQUIRED)
 
 # Instala los directorios que contiene tu URDF, launch, meshes, config, etc.
-install(DIRECTORY config launch meshes urdf textures
+install(DIRECTORY config launch meshes urdf #textures
   DESTINATION share/${PROJECT_NAME}
 )
 
