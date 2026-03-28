@@ -6,14 +6,21 @@ find_package(rclcpp REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 
-add_executable(pick_and_place src/pick_and_place.cpp)
-ament_target_dependencies(pick_and_place
-  rclcpp
-  moveit_task_constructor_core
-  moveit_ros_planning_interface
+include_directories(include)
+
+add_executable(d1_550
+  src/main.cpp
+  src/tasks/pick_and_place.cpp
 )
 
-install(TARGETS pick_and_place
+ament_target_dependencies(d1_550
+  rclcpp
+  moveit_core
+  moveit_ros_planning
+  moveit_task_constructor_core
+)
+
+install(TARGETS d1_550
   DESTINATION lib/${PROJECT_NAME}
 )
 
