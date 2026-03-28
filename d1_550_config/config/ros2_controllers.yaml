@@ -28,6 +28,7 @@ d1_arm_controller:
     state_interfaces:
       - position
       - velocity
+    allow_nonzero_velocity_at_trajectory_end: false
 d1_gripper_controller:
   ros__parameters:
     joints: 
@@ -38,3 +39,4 @@ d1_gripper_controller:
     state_interfaces:
       - position
       - velocity
+    allow_nonzero_velocity_at_trajectory_end: false
