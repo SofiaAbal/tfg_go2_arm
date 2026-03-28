@@ -208,7 +208,7 @@ mtc::Task MTCTaskNode::createTask()
           std::make_unique<mtc::stages::ComputeIK>("grasp pose IK", std::move(stage));
       // clang-format on
       wrapper->setMaxIKSolutions(8);
-      wrapper->setMinSolutionDistance(1.1);
+      wrapper->setMinSolutionDistance(1.0);
       wrapper->setIKFrame(grasp_frame_transform, hand_frame);
       wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
       wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
@@ -318,7 +318,7 @@ mtc::Task MTCTaskNode::createTask()
             std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
         // clang-format on
         wrapper->setMaxIKSolutions(8);
-        wrapper->setMinSolutionDistance(1.1);
+        wrapper->setMinSolutionDistance(1.0);
         wrapper->setIKFrame(place_frame_transform, hand_frame);
         wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
         wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
