@@ -108,6 +108,7 @@ mtc::Task MTCTaskNode::createTask()
 
   const auto& arm_group_name  = "d1_arm";
   const auto& hand_group_name = "d1_gripper";
+  const auto& full_group_name = "d1_full";
   const auto& hand_frame      = "Empty_Link6";
   // En el SRDF: <end_effector name="gripper" ... group="d1_gripper"/>
   // "eef" debe ser el atributo name=, no el group=
@@ -207,7 +208,7 @@ mtc::Task MTCTaskNode::createTask()
           std::make_unique<mtc::stages::ComputeIK>("grasp pose IK", std::move(stage));
       // clang-format on
       wrapper->setMaxIKSolutions(8);
-      wrapper->setMinSolutionDistance(1.0);
+      wrapper->setMinSolutionDistance(1.1);
       wrapper->setIKFrame(grasp_frame_transform, hand_frame);
       wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
       wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
@@ -317,7 +318,7 @@ mtc::Task MTCTaskNode::createTask()
             std::make_unique<mtc::stages::ComputeIK>("place pose IK", std::move(stage));
         // clang-format on
         wrapper->setMaxIKSolutions(8);
-        wrapper->setMinSolutionDistance(1.0);
+        wrapper->setMinSolutionDistance(1.1);
         wrapper->setIKFrame(place_frame_transform, hand_frame);
         wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
         wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
