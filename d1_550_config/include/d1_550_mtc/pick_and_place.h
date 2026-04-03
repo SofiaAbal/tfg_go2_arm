@@ -18,16 +18,22 @@
 
 namespace mtc = moveit::task_constructor;
 
+struct ObjectParams {
+  double pick_x, pick_y, pick_z;
+  double place_x, place_y, place_z;
+  std::string shape;
+};
+
 class PickAndPlace
 {
 public:
   explicit PickAndPlace(const rclcpp::Node::SharedPtr& node);
 
-  void setupPlanningScene();
-  bool doPickAndPlaceTask();
+  void setupPlanningScene(const ObjectParams& params);
+  bool doPickAndPlaceTask(const ObjectParams& params);
 
 private:
-  mtc::Task createPickAndPlaceTask();
+  mtc::Task createPickAndPlaceTask(const ObjectParams& params);
 
   rclcpp::Node::SharedPtr node_;
   mtc::Task task_;

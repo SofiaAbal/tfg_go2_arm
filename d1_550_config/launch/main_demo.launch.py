@@ -8,7 +8,7 @@ def generate_launch_description():
     # MTC Demo node
     main = Node(
         package="d1_550_config",
-        executable="main",
+        executable="d1_550",
         output="screen",
         parameters=[
             moveit_config.to_dict(),

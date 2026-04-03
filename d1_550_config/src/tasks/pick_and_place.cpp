@@ -5,20 +5,36 @@ namespace mtc = moveit::task_constructor;
 PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node)
 : node_(node) {}
 
-void PickAndPlace::setupPlanningScene()
+int getShapeFromInputString(const std::string& shape)
+{
+  std::string shape_upper = shape;
+  std::transform(shape_upper.begin(), shape_upper.end(), shape_upper.begin(),
+                 [](unsigned char c){ return std::toupper(c); });
+
+  if (shape_upper == "BOX")
+    return shape_msgs::msg::SolidPrimitive::BOX;
+  else if (shape_upper == "CYLINDER")
+    return shape_msgs::msg::SolidPrimitive::CYLINDER;
+  else if (shape_upper == "SPHERE")
+    return shape_msgs::msg::SolidPrimitive::SPHERE;
+
+  throw std::runtime_error("La forma no es valida");
+}
+
+void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 {
   moveit_msgs::msg::CollisionObject object;
   object.id = "object";
   object.header.frame_id = "world";
 
   object.primitives.resize(1);
-  object.primitives[0].type = shape_msgs::msg::SolidPrimitive::BOX;
+  object.primitives[0].type = getShapeFromInputString(params.shape);
   object.primitives[0].dimensions = { 0.02, 0.02, 0.1 };
 
   geometry_msgs::msg::Pose pose;
-  pose.position.x = 0.5;
-  pose.position.y = 0.3;
-  pose.position.z = 0.1;
+  pose.position.x = params.pick_x;
+  pose.position.y = params.pick_y;
+  pose.position.z = params.pick_z;
   pose.orientation.w = 1.0;
 
   object.pose = pose;
@@ -27,9 +43,9 @@ void PickAndPlace::setupPlanningScene()
   psi.applyCollisionObject(object);
 }
 
-bool PickAndPlace::doPickAndPlaceTask()
+bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
 {
-  task_ = createPickAndPlaceTask();
+  task_ = createPickAndPlaceTask(params);
 
   try {
     task_.init();
@@ -49,7 +65,7 @@ bool PickAndPlace::doPickAndPlaceTask()
   return result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
 }
 
-mtc::Task PickAndPlace::createPickAndPlaceTask()
+mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
 {
   mtc::Task task;
   task.stages()->setName("pick and place task");
@@ -218,9 +234,9 @@ mtc::Task PickAndPlace::createPickAndPlaceTask()
 
       geometry_msgs::msg::PoseStamped target_pose_msg;
       target_pose_msg.header.frame_id = "world";
-      target_pose_msg.pose.position.x = 0.5;
-      target_pose_msg.pose.position.y = 0.2;
-      target_pose_msg.pose.position.z = 0.1;
+      target_pose_msg.pose.position.x = params.place_x;
+      target_pose_msg.pose.position.y = params.place_y;
+      target_pose_msg.pose.position.z = params.place_z;
       target_pose_msg.pose.orientation.w = 1.0;
 
       stage->setPose(target_pose_msg);

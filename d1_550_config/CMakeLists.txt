@@ -5,6 +5,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 include_directories(include)
 
@@ -12,6 +13,16 @@ add_executable(d1_550
   src/main.cpp
   src/tasks/pick_and_place.cpp
 )
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/PickAndPlaceObject.srv"
+)
+
+rosidl_get_typesupport_target(cpp_typesupport_target
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+target_link_libraries(d1_550
+  ${cpp_typesupport_target})
 
 ament_target_dependencies(d1_550
   rclcpp

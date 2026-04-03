@@ -1,0 +1,10 @@
+float64 pick_x
+float64 pick_y
+float64 pick_z
+float64 place_x
+float64 place_y
+float64 place_z
+string shape
+---
+bool    success
+string  message
