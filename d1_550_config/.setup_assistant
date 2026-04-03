@@ -5,7 +5,7 @@ moveit_setup_assistant_config:
   srdf:
     relative_path: config/d1_550_description.srdf
   package_settings:
-    author_name: Sofía
+    author_name: Sofía Abal Freire
     author_email: sofia.abal.freire@udc.es
     generated_timestamp: 1772549959
   control_xacro:
