@@ -22,6 +22,7 @@ struct ObjectParams {
   double pick_x, pick_y, pick_z;
   double place_x, place_y, place_z;
   std::string shape;
+  double dimension_x, dimension_y, dimension_z;
 };
 
 class PickAndPlace

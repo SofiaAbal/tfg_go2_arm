@@ -18,7 +18,7 @@ int getShapeFromInputString(const std::string& shape)
   else if (shape_upper == "SPHERE")
     return shape_msgs::msg::SolidPrimitive::SPHERE;
 
-  throw std::runtime_error("La forma no es valida");
+  throw std::runtime_error("La forma '"+shape+"' no es valida. Usar 'BOX', 'CYLINDER' o 'SPHERE'.");
 }
 
 void PickAndPlace::setupPlanningScene(const ObjectParams& params)
@@ -29,7 +29,7 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 
   object.primitives.resize(1);
   object.primitives[0].type = getShapeFromInputString(params.shape);
-  object.primitives[0].dimensions = { 0.02, 0.02, 0.1 };
+  object.primitives[0].dimensions = { params.dimension_x, params.dimension_y, params.dimension_z };
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = params.pick_x;

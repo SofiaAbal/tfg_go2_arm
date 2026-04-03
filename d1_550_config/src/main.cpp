@@ -7,7 +7,6 @@ static const rclcpp::Logger LOGGER = rclcpp::get_logger("main");
 
 class PickAndPlace;
 
-
 int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
@@ -24,12 +23,16 @@ int main(int argc, char** argv)
       std::shared_ptr<d1_550_config::srv::PickAndPlaceObject::Response> response)
       {
         RCLCPP_INFO(LOGGER,
-            "Request recibida: 'pick(%.2f, %.2f, %.2f) - place(%.2f, %.2f, %.2f) - shape: %s'",
+            "Request: 'pick(%.2f, %.2f, %.2f) - place(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f)",
             request->pick_x, request->pick_y, request->pick_z,
             request->place_x, request->place_y, request->place_z,
-            request->shape.c_str());
-
-        ObjectParams params {
+            request->shape.c_str(),
+            request->dimension_x, request->dimension_y, request->dimension_z
+          );
+        
+        try
+        {
+          ObjectParams params {
           .pick_x  = request->pick_x,
           .pick_y  = request->pick_y,
           .pick_z  = request->pick_z,
@@ -37,6 +40,9 @@ int main(int argc, char** argv)
           .place_y = request->place_y,
           .place_z = request->place_z,
           .shape   = request->shape,
+          .dimension_x = request->dimension_x,
+          .dimension_y = request->dimension_y,
+          .dimension_z = request->dimension_z
         };
 
         pick_and_place->setupPlanningScene(params);
@@ -44,8 +50,13 @@ int main(int argc, char** argv)
         response->message = response->success
             ? "Tarea completada correctamente"
             : "Error durante la planificación o ejecución";
-
-        RCLCPP_INFO(LOGGER, "Resultado: %s — %s", response->success ? "OK" : "FAIL", response->message.c_str());
+        }
+        catch(const std::exception& e)
+        {
+          response->success = false;
+          response->message = e.what();
+        }
+        RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
       });
 
   RCLCPP_INFO(LOGGER, "Servicio pick_and_place_object activo. Esperando al servicio...");

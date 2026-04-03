@@ -3,6 +3,8 @@ project(d1_550_config)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(moveit_core REQUIRED)
+find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -28,6 +30,7 @@ ament_target_dependencies(d1_550
   rclcpp
   moveit_core
   moveit_ros_planning
+  moveit_ros_planning_interface
   moveit_task_constructor_core
 )
 
