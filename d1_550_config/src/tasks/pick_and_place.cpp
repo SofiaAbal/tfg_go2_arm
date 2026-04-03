@@ -5,20 +5,26 @@ namespace mtc = moveit::task_constructor;
 PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node)
 : node_(node) {}
 
-int getShapeFromInputString(const std::string& shape)
+void setPrimitiveData(shape_msgs::msg::SolidPrimitive& primitive, const ObjectParams& params)
 {
-  std::string shape_upper = shape;
-  std::transform(shape_upper.begin(), shape_upper.end(), shape_upper.begin(),
-                 [](unsigned char c){ return std::toupper(c); });
+  std::string shape_upper = params.shape;
+  std::transform(shape_upper.begin(), shape_upper.end(), shape_upper.begin(), [](unsigned char c){ return std::toupper(c); });
 
-  if (shape_upper == "BOX")
-    return shape_msgs::msg::SolidPrimitive::BOX;
-  else if (shape_upper == "CYLINDER")
-    return shape_msgs::msg::SolidPrimitive::CYLINDER;
-  else if (shape_upper == "SPHERE")
-    return shape_msgs::msg::SolidPrimitive::SPHERE;
-
-  throw std::runtime_error("La forma '"+shape+"' no es valida. Usar 'BOX', 'CYLINDER' o 'SPHERE'.");
+  if (shape_upper == "BOX") {
+    primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
+    primitive.dimensions = { params.dimension_x, params.dimension_y, params.dimension_z };
+  } else if (shape_upper == "CYLINDER") {
+    primitive.type = shape_msgs::msg::SolidPrimitive::CYLINDER;
+    primitive.dimensions = { params.dimension_x, params.dimension_y };
+  } else if (shape_upper == "CONE") {
+    primitive.type = shape_msgs::msg::SolidPrimitive::CONE;
+    primitive.dimensions = { params.dimension_x, params.dimension_y };
+  } else if (shape_upper == "SPHERE") {
+    primitive.type = shape_msgs::msg::SolidPrimitive::SPHERE;
+    primitive.dimensions = { params.dimension_x };
+  } else {
+    throw std::runtime_error("La forma '"+params.shape+"' no es valida. Usar 'BOX', 'CYLINDER', 'CONE' o 'SPHERE'.");
+  }
 }
 
 void PickAndPlace::setupPlanningScene(const ObjectParams& params)
@@ -28,8 +34,9 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
   object.header.frame_id = "world";
 
   object.primitives.resize(1);
-  object.primitives[0].type = getShapeFromInputString(params.shape);
-  object.primitives[0].dimensions = { params.dimension_x, params.dimension_y, params.dimension_z };
+  setPrimitiveData(object.primitives[0], params);
+  //object.primitives[0].type = getShapeFromInputString(params.shape);
+  //object.primitives[0].dimensions = { params.dimension_x, params.dimension_y, params.dimension_z };
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = params.pick_x;
