@@ -66,23 +66,46 @@ moveit_msgs::msg::CollisionObject defineDog() {
   return object;
 }
 
+moveit_msgs::msg::CollisionObject defineGround() {
+  moveit_msgs::msg::CollisionObject object;
+  object.id = "ground";
+  object.header.frame_id = "world";
+
+  object.primitives.resize(1);
+  setObjectData(object.primitives[0], ObjectParams{.shape="BOX", .dimension_x=2.0, .dimension_y=2.0, .dimension_z=0.01});
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = 0;
+  pose.position.y = 0;
+  pose.position.z = -0.2;
+  pose.orientation.w = 1.0;
+
+  object.pose = pose;
+
+  return object;
+}
+
 void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 {
   moveit_msgs::msg::CollisionObject object = defineObject(params);
-  
-
   moveit::planning_interface::PlanningSceneInterface psi;
   psi.applyCollisionObject(object);
-  //psi.applyCollisionObject(dog);
+}
+
+void defineObstaclesInPlanningScene() {
+  moveit_msgs::msg::CollisionObject dog = defineDog();
+  moveit::planning_interface::PlanningSceneInterface psi;
+  psi.applyCollisionObject(dog);
+
+  moveit_msgs::msg::CollisionObject ground = defineGround();
+  psi.applyCollisionObject(ground);
 }
 
 bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
 {
   task_ = createPickAndPlaceTask(params);
 
-  moveit_msgs::msg::CollisionObject dog = defineDog();
-  moveit::planning_interface::PlanningSceneInterface psi;
-  psi.applyCollisionObject(dog);
+  defineObstaclesInPlanningScene();
 
   try {
     task_.init();
@@ -198,6 +221,9 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
       wrapper->setIKFrame(grasp_frame_transform, hand_frame);
       wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group" });
       wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { "target_pose" });
+
+      // mas solucions para mas probabilkidades de encontrar una buena
+      wrapper->setMaxIKSolutions(50);
 
       grasp->insert(std::move(wrapper));
     }
