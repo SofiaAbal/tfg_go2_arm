@@ -5,7 +5,7 @@ namespace mtc = moveit::task_constructor;
 PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node)
 : node_(node) {}
 
-void setPrimitiveData(shape_msgs::msg::SolidPrimitive& primitive, const ObjectParams& params)
+void setObjectData(shape_msgs::msg::SolidPrimitive& primitive, const ObjectParams& params)
 {
   std::string shape_upper = params.shape;
   std::transform(shape_upper.begin(), shape_upper.end(), shape_upper.begin(), [](unsigned char c){ return std::toupper(c); });
@@ -27,16 +27,14 @@ void setPrimitiveData(shape_msgs::msg::SolidPrimitive& primitive, const ObjectPa
   }
 }
 
-void PickAndPlace::setupPlanningScene(const ObjectParams& params)
+moveit_msgs::msg::CollisionObject defineObject(const ObjectParams& params)
 {
   moveit_msgs::msg::CollisionObject object;
   object.id = "object";
   object.header.frame_id = "world";
 
   object.primitives.resize(1);
-  setPrimitiveData(object.primitives[0], params);
-  //object.primitives[0].type = getShapeFromInputString(params.shape);
-  //object.primitives[0].dimensions = { params.dimension_x, params.dimension_y, params.dimension_z };
+  setObjectData(object.primitives[0], params);
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = params.pick_x;
@@ -46,13 +44,45 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 
   object.pose = pose;
 
+  return object;
+}
+
+moveit_msgs::msg::CollisionObject defineDog() {
+  moveit_msgs::msg::CollisionObject object;
+  object.id = "dog";
+  object.header.frame_id = "world";
+
+  object.primitives.resize(1);
+  setObjectData(object.primitives[0], ObjectParams{.shape="BOX", .dimension_x=0.7, .dimension_y=0.3, .dimension_z=0.2});
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = -0.25;
+  pose.position.y = 0;
+  pose.position.z = -0.1;
+  pose.orientation.w = 1.0;
+
+  object.pose = pose;
+
+  return object;
+}
+
+void PickAndPlace::setupPlanningScene(const ObjectParams& params)
+{
+  moveit_msgs::msg::CollisionObject object = defineObject(params);
+  
+
   moveit::planning_interface::PlanningSceneInterface psi;
   psi.applyCollisionObject(object);
+  //psi.applyCollisionObject(dog);
 }
 
 bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
 {
   task_ = createPickAndPlaceTask(params);
+
+  moveit_msgs::msg::CollisionObject dog = defineDog();
+  moveit::planning_interface::PlanningSceneInterface psi;
+  psi.applyCollisionObject(dog);
 
   try {
     task_.init();

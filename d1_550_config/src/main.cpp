@@ -16,7 +16,7 @@ int main(int argc, char** argv)
   executor.add_node(node);
   std::thread spin_thread([&executor]() { executor.spin(); });
 
-  auto pick_and_place = std::make_shared<PickAndPlace>(node);
+  auto pick_and_place_task = std::make_shared<PickAndPlace>(node);
 
   auto service = node->create_service<d1_550_config::srv::PickAndPlaceObject>("pick_and_place_object",
       [&](const std::shared_ptr<d1_550_config::srv::PickAndPlaceObject::Request> request,
@@ -45,8 +45,8 @@ int main(int argc, char** argv)
           .dimension_z = request->dimension_z
         };
 
-        pick_and_place->setupPlanningScene(params);
-        response->success = pick_and_place->doPickAndPlaceTask(params);
+        pick_and_place_task->setupPlanningScene(params);
+        response->success = pick_and_place_task->doPickAndPlaceTask(params);
         response->message = response->success
             ? "Tarea completada correctamente"
             : "Error durante la planificación o ejecución";
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
       });
 
-  RCLCPP_INFO(LOGGER, "Servicio pick_and_place_object activo. Esperando al servicio...");
+  RCLCPP_INFO(LOGGER, "Servicio pick_and_place_object activo. Esperando parámetros del objeto...");
 
   spin_thread.join();
   rclcpp::shutdown();

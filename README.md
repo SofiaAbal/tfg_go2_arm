@@ -58,3 +58,6 @@ ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{
 
 ```
 
+
+// funciona con pinzas, actualmente por ejemplo:
+// "{pick_x: 0.3, pick_y: 0.4, pick_z: 0, place_x: 0.3, place_y: 0.45, place_z: 0, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.2}"
