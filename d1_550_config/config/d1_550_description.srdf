@@ -43,14 +43,6 @@
         <joint name="Joint5" value="0"/>
         <joint name="Joint6" value="0"/>
     </group_state>
-    <group_state name="arm_pick_start" group="d1_arm">
-        <joint name="Joint1" value="0"/>
-        <joint name="Joint2" value="0"/>
-        <joint name="Joint3" value="0.012"/>
-        <joint name="Joint4" value="0.017"/>
-        <joint name="Joint5" value="-1.274"/>
-        <joint name="Joint6" value="0"/>
-    </group_state>
     <group_state name="arm_grasp" group="d1_arm">
         <joint name="Joint1" value="0"/>
         <joint name="Joint2" value="1.012"/>

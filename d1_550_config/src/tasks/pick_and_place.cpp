@@ -100,6 +100,12 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
   cartesian_planner->setMaxAccelerationScalingFactor(1.0);
   cartesian_planner->setStepSize(0.0001);
 
+  // Empezamos con el brazo recodigo
+  // auto stage = std::make_unique<mtc::stages::MoveTo>("move to start", interpolation_planner);
+  // stage->setGroup(arm_group_name);
+  // stage->setGoal("arm_start");
+  // task.add(std::move(stage));
+
   auto stage_open_hand =
       std::make_unique<mtc::stages::MoveTo>("open hand", interpolation_planner);
   stage_open_hand->setGroup(hand_group_name);
@@ -314,7 +320,7 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
   {
     auto stage = std::make_unique<mtc::stages::MoveTo>("return home", interpolation_planner);
     stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
-    stage->setGoal("arm_ready");
+    stage->setGoal("arm_start");
     task.add(std::move(stage));
   }
 
