@@ -93,9 +93,9 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 }
 
 void defineObstaclesInPlanningScene() {
-  moveit_msgs::msg::CollisionObject dog = defineDog();
+  /* moveit_msgs::msg::CollisionObject dog = defineDog(); */
   moveit::planning_interface::PlanningSceneInterface psi;
-  psi.applyCollisionObject(dog);
+  /* psi.applyCollisionObject(dog); */
 
   moveit_msgs::msg::CollisionObject ground = defineGround();
   psi.applyCollisionObject(ground);
@@ -105,7 +105,7 @@ bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
 {
   task_ = createPickAndPlaceTask(params);
 
-  defineObstaclesInPlanningScene();
+  /* defineObstaclesInPlanningScene(); */
 
   try {
     task_.init();
@@ -144,6 +144,18 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
   auto stage_state_current = std::make_unique<mtc::stages::CurrentState>("current");
   current_state_ptr = stage_state_current.get();
   task.add(std::move(stage_state_current));
+/* 
+  {
+    auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+        "allow collision (object+hand, ground)");
+    stage->allowCollisions("object", {"ground"}, true);
+    stage->allowCollisions("ground",
+        task.getRobotModel()
+            ->getJointModelGroup(hand_group_name)
+            ->getLinkModelNamesWithCollisionGeometry(),
+        true);
+    task.add(std::move(stage));
+  } */
 
   auto sampling_planner = std::make_shared<mtc::solvers::PipelinePlanner>(node_);
   auto interpolation_planner = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
@@ -169,7 +181,7 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
       "move to pick",
       mtc::stages::Connect::GroupPlannerVector{ { arm_group_name, sampling_planner } });
 
-  stage_move_to_pick->setTimeout(5.0);
+  stage_move_to_pick->setTimeout(10.0);
   stage_move_to_pick->properties().configureInitFrom(mtc::Stage::PARENT);
   task.add(std::move(stage_move_to_pick));
 
@@ -277,13 +289,29 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
   }
 
   {
+    auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+        "allow collision (object, ground)");
+
+    stage->allowCollisions("object", {"ground"}, true);
+
+    task.add(std::move(stage));
+  }
+
+  {
+    auto stage = std::make_unique<mtc::stages::MoveTo>("return home", interpolation_planner);
+    stage->properties().configureInitFrom(mtc::Stage::PARENT, { "group" });
+    stage->setGoal("arm_start");
+    task.add(std::move(stage));
+  }
+
+  {
     auto stage_move_to_place = std::make_unique<mtc::stages::Connect>(
         "move to place",
         mtc::stages::Connect::GroupPlannerVector{
             { arm_group_name, sampling_planner },
             { hand_group_name, interpolation_planner } });
 
-    stage_move_to_place->setTimeout(5.0);
+    stage_move_to_place->setTimeout(10.0);
     stage_move_to_place->properties().configureInitFrom(mtc::Stage::PARENT);
     task.add(std::move(stage_move_to_place));
   }
@@ -292,9 +320,14 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
     auto place = std::make_unique<mtc::SerialContainer>("place object");
     task.properties().exposeTo(place->properties(), { "eef", "group", "ik_frame" });
 
-    place->properties().configureInitFrom(mtc::Stage::PARENT,
-                                          { "eef", "group", "ik_frame" });
+    place->properties().configureInitFrom(mtc::Stage::PARENT, { "eef", "group", "ik_frame" });
 
+/*   {
+    auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+        "allow collision (object,ground) for place IK");
+    stage->allowCollisions("object", {"ground"}, true);
+    place->insert(std::move(stage));
+  }    */                             
     {
       auto stage = std::make_unique<mtc::stages::GeneratePlacePose>("generate place pose");
       stage->properties().configureInitFrom(mtc::Stage::PARENT);
