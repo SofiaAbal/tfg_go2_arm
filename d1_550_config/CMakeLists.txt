@@ -18,6 +18,8 @@ add_executable(d1_550
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PickAndPlaceObject.srv"
+  "srv/PickObject.srv"
+  "srv/PlaceObject.srv"
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target

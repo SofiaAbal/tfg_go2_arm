@@ -32,10 +32,15 @@ public:
 
   void setupPlanningScene(const ObjectParams& params);
   bool doPickAndPlaceTask(const ObjectParams& params);
+  bool doPickTask(const ObjectParams& params);
+  bool doPlaceTask(const ObjectParams& params);
 
 private:
   mtc::Task createPickAndPlaceTask(const ObjectParams& params);
+  mtc::Task createPickTask(const ObjectParams& params);
+  mtc::Task createPlaceTask(const ObjectParams& params);
 
   rclcpp::Node::SharedPtr node_;
   mtc::Task task_;
+  bool has_object_ = false;
 };

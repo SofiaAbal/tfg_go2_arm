@@ -45,7 +45,7 @@ Para lanzar el servicio que nos permite añadir las configuraciones del objeto a
 ## En un terminal nuevo (previo source)
 
 # Ejemplo BOX
-ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.1, pick_y: 0.2, pick_z: 0.0, place_x: 0.5, place_y: 0.2, place_z: 0.1, shape: box, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1}"
+ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.3, pick_y: 0.4, pick_z: -0.02, place_x: 0.3, place_y: 0.45, place_z: -0.02, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.3}"
 
 # Ejemplo CYLINDER
 ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.1, pick_y: 0.2, pick_z: 0.0, place_x: 0.5, place_y: 0.2, place_z: 0.1, shape: cylinder, dimension_x: 0.1, dimension_y: 0.02}"
@@ -59,5 +59,14 @@ ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{
 ```
 
 
-// funciona con pinzas, actualmente por ejemplo:
-// ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.3, pick_y: 0.4, pick_z: -0.02, place_x: 0.3, place_y: 0.45, place_z: -0.02, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.3}"
+### División de la tarea
+
+Actualmente tenemos soporte de dos servicios independientes para la tarea pick and place:
+- Servicio PickObject
+```
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_y: 0.4, pick_z: 0.0, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.2}"
+```
+- Servicio PlaceObject
+```
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: 0.4, place_z: 0.0}"
+```
