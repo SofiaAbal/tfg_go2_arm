@@ -1,0 +1,6 @@
+float64 place_x
+float64 place_y
+float64 place_z
+---
+bool    success
+string  message
