@@ -100,7 +100,6 @@ moveit_msgs::msg::CollisionObject defineGround() {
 
 void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 {
-  RCLCPP_INFO(node_->get_logger(), "Entra a setup");
   moveit_msgs::msg::CollisionObject object = defineObject(params);
   moveit::planning_interface::PlanningSceneInterface psi;
   psi.applyCollisionObject(object);
@@ -141,7 +140,6 @@ bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
 
 bool PickAndPlace::doPickTask(const ObjectParams& params)
 {
-  RCLCPP_INFO(node_->get_logger(), "Entra a doPickTask");
   task_ = createPickTask(params);
 
   /* defineObstaclesInPlanningScene(); */
@@ -494,10 +492,6 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
 
 mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
 {
-  // Implementación similar a createPickAndPlaceTask pero solo con las etapas necesarias para el pick
-  // ...
-  RCLCPP_INFO(node_->get_logger(), "Entra a createPickTask");
-
   mtc::Task task;
   task.stages()->setName("pick and place task");
   task.loadRobotModel(node_);

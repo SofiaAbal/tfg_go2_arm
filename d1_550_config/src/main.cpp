@@ -46,17 +46,12 @@ int main(int argc, char** argv)
           .rot_z = request->rot_z
           };
 
-          RCLCPP_INFO(LOGGER, "ENTRA A PICK---------------------------------------------\n");
-
           if(pick_place_task->hasObject()) {
-            RCLCPP_INFO(LOGGER, "Si tiene objeto, hay que hacer place\n");
             response->success = false;
             response->message = "Ya tenemos un objeto, es necesario hacer un place antes para soltarlo.";
             RCLCPP_ERROR(LOGGER, response->message.c_str());
 
             return;
-          } else {
-            RCLCPP_INFO(LOGGER, "No tiene objeto, se puede hacer pick\n");
           }
 
           pick_place_task->setupPlanningScene(params);
