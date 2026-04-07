@@ -148,9 +148,14 @@ bool PickAndPlace::doPickTask(const ObjectParams& params)
   task_.introspection().publishSolution(*task_.solutions().front());
 
   auto result = task_.execute(*task_.solutions().front());
-  has_object_ = true;
 
-  return result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
+  auto success = result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
+
+  if (success) {
+    has_object_ = true;
+  }
+
+  return success;
 }
 
 bool PickAndPlace::doPlaceTask(const ObjectParams& params)
@@ -181,9 +186,12 @@ bool PickAndPlace::doPlaceTask(const ObjectParams& params)
   task_.introspection().publishSolution(*task_.solutions().front());
 
   auto result = task_.execute(*task_.solutions().front());
-  has_object_ = false;
-
-  return result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
+  auto success = result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
+  if (success) {
+    has_object_ = false;
+  }
+  
+  return success;
 }
 
 mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
