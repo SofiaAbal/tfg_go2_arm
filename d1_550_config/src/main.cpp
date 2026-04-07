@@ -45,7 +45,12 @@ int main(int argc, char** argv)
           .rot_y = request->rot_y,
           .rot_z = request->rot_z
           };
+          // Comprobamos obstaculos
+          /* if(!pick_place_task->hasObstacles()) {
+            pick_place_task->setupObstacles();
+          } */
 
+          // Comprobamos objeto
           if(pick_place_task->hasObject()) {
             response->success = false;
             response->message = "Ya tenemos un objeto, es necesario hacer un place antes para soltarlo.";
@@ -100,6 +105,13 @@ int main(int argc, char** argv)
           .place_y = request->place_y,
           .place_z = request->place_z
         };
+
+        // Comprobamos obstaculos
+          /* if(!pick_place_task->hasObstacles()) {
+            response->success = false;
+            response->message = "No se han definido los obstáculos en la escena, no se puede realizar la tarea de place.";
+            RCLCPP_ERROR(LOGGER, response->message.c_str());
+          } */
 
         if(!pick_place_task->hasObject()) {
             response->success = false;

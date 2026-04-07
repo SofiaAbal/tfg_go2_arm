@@ -3,7 +3,14 @@
 namespace mtc = moveit::task_constructor;
 
 PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node)
-: node_(node) {}
+: node_(node) {
+
+  // al lanzara el launcher quiero que ya se me muestre la escena del brazo y losobstaculos
+  setupObstacles();
+
+  // mini sleep para asegurar que la escena se me carga bien
+  rclcpp::sleep_for(std::chrono::milliseconds(500));
+}
 
 void setObjectData(shape_msgs::msg::SolidPrimitive& primitive, const ObjectParams& params)
 {
@@ -66,7 +73,7 @@ moveit_msgs::msg::CollisionObject defineDog() {
   object.header.frame_id = "world";
 
   object.primitives.resize(1);
-  setObjectData(object.primitives[0], ObjectParams{.shape="BOX", .dimension_x=0.7, .dimension_y=0.3, .dimension_z=0.2});
+  setObjectData(object.primitives[0], ObjectParams{.shape="BOX", .dimension_x=0.7, .dimension_y=0.35, .dimension_z=0.2});
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = -0.25;
@@ -105,10 +112,21 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
   psi.applyCollisionObject(object);
 }
 
-void defineObstaclesInPlanningScene() {
-  /* moveit_msgs::msg::CollisionObject dog = defineDog(); */
+void PickAndPlace::setupObstacles()
+{
   moveit::planning_interface::PlanningSceneInterface psi;
-  /* psi.applyCollisionObject(dog); */
+
+  moveit_msgs::msg::CollisionObject ground = defineGround();
+  psi.applyCollisionObject(ground);
+
+  moveit_msgs::msg::CollisionObject dog = defineDog();
+  psi.applyCollisionObject(dog);
+}
+
+void defineObstaclesInPlanningScene() {
+  moveit_msgs::msg::CollisionObject dog = defineDog();
+  moveit::planning_interface::PlanningSceneInterface psi;
+  psi.applyCollisionObject(dog);
 
   moveit_msgs::msg::CollisionObject ground = defineGround();
   psi.applyCollisionObject(ground);

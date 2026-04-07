@@ -35,6 +35,7 @@ public:
   explicit PickAndPlace(const rclcpp::Node::SharedPtr& node);
 
   void setupPlanningScene(const ObjectParams& params);
+  void setupObstacles();
   bool doPickAndPlaceTask(const ObjectParams& params);
   bool doPickTask(const ObjectParams& params);
   bool doPlaceTask(const ObjectParams& params);
