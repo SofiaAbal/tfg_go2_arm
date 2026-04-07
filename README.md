@@ -64,7 +64,7 @@ ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{
 Actualmente tenemos soporte de dos servicios independientes para la tarea pick and place:
 - Servicio PickObject
 ```
-ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_y: 0.4, pick_z: 0.0, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.2}"
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_y: 0.4, pick_z: 0.0, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.2, rot_x: 3, rot_y: -1, rot_z: 0.2}"
 ```
 - Servicio PlaceObject
 ```

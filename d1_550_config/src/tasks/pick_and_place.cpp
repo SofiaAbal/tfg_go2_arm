@@ -40,7 +40,20 @@ moveit_msgs::msg::CollisionObject defineObject(const ObjectParams& params)
   pose.position.x = params.pick_x;
   pose.position.y = params.pick_y;
   pose.position.z = params.pick_z;
-  pose.orientation.w = 1.0;
+  /* pose.orientation.w = 1.0; //id, no rota -> necesito quaternion */
+
+  // documentacion
+  /* tf2::Quaternion q_orig, q_rot, q_new;
+  q_orig.setRPY(0.0, 0.0, 0.0);
+  q_rot.setRPY(params.rot_x, params.rot_y, params.rot_z);
+  q_new = q_rot * q_orig;
+  q_new.normalize();
+  pose.orientation = tf2::toMsg(q_new); */
+
+  tf2::Quaternion q;
+  q.setRPY(params.rot_x, params.rot_y, params.rot_z);
+  q.normalize();
+  pose.orientation = tf2::toMsg(q);
 
   object.pose = pose;
 
@@ -127,8 +140,6 @@ bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
 
 bool PickAndPlace::doPickTask(const ObjectParams& params)
 {
-  //task_ = createPickAndPlaceTask(params);
-
   task_ = createPickTask(params);
 
   /* defineObstaclesInPlanningScene(); */
@@ -160,13 +171,6 @@ bool PickAndPlace::doPickTask(const ObjectParams& params)
 
 bool PickAndPlace::doPlaceTask(const ObjectParams& params)
 {
-  //task_ = createPickAndPlaceTask(params);
-
-  if (!has_object_) {
-    RCLCPP_ERROR(node_->get_logger(), "Es necesario realizar un pick primero para tener un objeto que colocar");
-    return false;
-  }
-
   task_ = createPlaceTask(params);
 
   /* defineObstaclesInPlanningScene(); */
@@ -488,8 +492,6 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
 
 mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
 {
-  // Implementación similar a createPickAndPlaceTask pero solo con las etapas necesarias para el pick
-  // ...
   mtc::Task task;
   task.stages()->setName("pick and place task");
   task.loadRobotModel(node_);
