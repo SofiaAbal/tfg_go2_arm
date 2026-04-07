@@ -68,4 +68,5 @@ ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_
 ```
 - Servicio PlaceObject
 ```
-ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, place_y: -0.3, place_z: -0.05}"```
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, place_y: -0.3, place_z: -0.05}"
+```
