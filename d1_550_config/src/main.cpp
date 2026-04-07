@@ -24,10 +24,11 @@ int main(int argc, char** argv)
       std::shared_ptr<d1_550_config::srv::PickObject::Response> response)
       {
         RCLCPP_INFO(LOGGER,
-            "Request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f)",
+            "Request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - rotation(%.2f, %.2f, %.2f)",
             request->pick_x, request->pick_y, request->pick_z,
             request->shape.c_str(),
-            request->dimension_x, request->dimension_y, request->dimension_z
+            request->dimension_x, request->dimension_y, request->dimension_z,
+            request->rot_x, request->rot_y, request->rot_z
           );
         
         try
@@ -39,8 +40,24 @@ int main(int argc, char** argv)
           .shape   = request->shape,
           .dimension_x = request->dimension_x,
           .dimension_y = request->dimension_y,
-          .dimension_z = request->dimension_z
+          .dimension_z = request->dimension_z,
+          .rot_x = request->rot_x,
+          .rot_y = request->rot_y,
+          .rot_z = request->rot_z
           };
+
+          RCLCPP_INFO(LOGGER, "ENTRA A PICK---------------------------------------------\n");
+
+          if(pick_place_task->hasObject()) {
+            RCLCPP_INFO(LOGGER, "Si tiene objeto, hay que hacer place\n");
+            response->success = false;
+            response->message = "Ya tenemos un objeto, es necesario hacer un place antes para soltarlo.";
+            RCLCPP_ERROR(LOGGER, response->message.c_str());
+
+            return;
+          } else {
+            RCLCPP_INFO(LOGGER, "No tiene objeto, se puede hacer pick\n");
+          }
 
           pick_place_task->setupPlanningScene(params);
           response->success = pick_place_task->doPickTask(params);
@@ -50,7 +67,7 @@ int main(int argc, char** argv)
 
             moveit_msgs::msg::AttachedCollisionObject aco;
             aco.object.id = "object";
-            aco.link_name = "Empty_Link6";  // hand_frame
+            aco.link_name = "Empty_Link6";
             aco.object.operation = aco.object.ADD;
 
             psi.applyAttachedCollisionObject(aco);
@@ -88,6 +105,14 @@ int main(int argc, char** argv)
           .place_y = request->place_y,
           .place_z = request->place_z
         };
+
+        if(!pick_place_task->hasObject()) {
+            response->success = false;
+            response->message = "Es necesario realizar un pick primero para tener un objeto que colocar";
+            RCLCPP_ERROR(LOGGER, response->message.c_str());
+            
+            return;
+          }
 
         response->success = pick_place_task->doPlaceTask(params);
         response->message = response->success

@@ -19,10 +19,14 @@
 namespace mtc = moveit::task_constructor;
 
 struct ObjectParams {
+  // pick params
   double pick_x, pick_y, pick_z;
-  double place_x, place_y, place_z;
   std::string shape;
   double dimension_x, dimension_y = 0.0, dimension_z = 0.0;
+  double rot_x = 0.0, rot_y = 0.0, rot_z = 0.0; // rad
+
+  // place params
+  double place_x, place_y, place_z;
 };
 
 class PickAndPlace
@@ -34,6 +38,7 @@ public:
   bool doPickAndPlaceTask(const ObjectParams& params);
   bool doPickTask(const ObjectParams& params);
   bool doPlaceTask(const ObjectParams& params);
+  bool hasObject() const { return has_object_; }
 
 private:
   mtc::Task createPickAndPlaceTask(const ObjectParams& params);
