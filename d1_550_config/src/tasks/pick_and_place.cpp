@@ -106,9 +106,9 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
 }
 
 void defineObstaclesInPlanningScene() {
-  /* moveit_msgs::msg::CollisionObject dog = defineDog(); */
+  moveit_msgs::msg::CollisionObject dog = defineDog();
   moveit::planning_interface::PlanningSceneInterface psi;
-  /* psi.applyCollisionObject(dog); */
+  psi.applyCollisionObject(dog);
 
   moveit_msgs::msg::CollisionObject ground = defineGround();
   psi.applyCollisionObject(ground);
@@ -142,7 +142,7 @@ bool PickAndPlace::doPickTask(const ObjectParams& params)
 {
   task_ = createPickTask(params);
 
-  /* defineObstaclesInPlanningScene(); */
+  defineObstaclesInPlanningScene();
 
   try {
     task_.init();
