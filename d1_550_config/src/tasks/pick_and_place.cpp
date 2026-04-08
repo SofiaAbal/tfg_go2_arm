@@ -62,7 +62,8 @@ moveit_msgs::msg::CollisionObject defineObject(const ObjectParams& params)
   q.normalize();
   pose.orientation = tf2::toMsg(q);
 
-  object.pose = pose;
+  /* object.pose = pose; */
+  object.primitive_poses.push_back(pose);
 
   return object;
 }
@@ -81,7 +82,8 @@ moveit_msgs::msg::CollisionObject defineDog() {
   pose.position.z = -0.1;
   pose.orientation.w = 1.0;
 
-  object.pose = pose;
+  /* object.pose = pose; */
+  object.primitive_poses.push_back(pose);
 
   return object;
 }
@@ -100,7 +102,8 @@ moveit_msgs::msg::CollisionObject defineGround() {
   pose.position.z = -0.2;
   pose.orientation.w = 1.0;
 
-  object.pose = pose;
+  /* object.pose = pose; */
+  object.primitive_poses.push_back(pose);
 
   return object;
 }

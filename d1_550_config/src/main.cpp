@@ -45,10 +45,6 @@ int main(int argc, char** argv)
           .rot_y = request->rot_y,
           .rot_z = request->rot_z
           };
-          // Comprobamos obstaculos
-          /* if(!pick_place_task->hasObstacles()) {
-            pick_place_task->setupObstacles();
-          } */
 
           // Comprobamos objeto
           if(pick_place_task->hasObject()) {
@@ -63,17 +59,6 @@ int main(int argc, char** argv)
           response->success = pick_place_task->doPickTask(params);
           if (response->success) {
             response->message = "Tarea pick realizada correctamente";
-            moveit::planning_interface::PlanningSceneInterface psi;
-
-            moveit_msgs::msg::AttachedCollisionObject aco;
-            aco.object.id = "object";
-            aco.link_name = "Empty_Link6";
-            aco.object.operation = aco.object.ADD;
-
-            psi.applyAttachedCollisionObject(aco);
-
-            // opcional pero recomendado
-            rclcpp::sleep_for(std::chrono::milliseconds(500));
           } else {
             response->message = "Error durante la planificación o ejecución de pick";
           }
@@ -105,13 +90,6 @@ int main(int argc, char** argv)
           .place_y = request->place_y,
           .place_z = request->place_z
         };
-
-        // Comprobamos obstaculos
-          /* if(!pick_place_task->hasObstacles()) {
-            response->success = false;
-            response->message = "No se han definido los obstáculos en la escena, no se puede realizar la tarea de place.";
-            RCLCPP_ERROR(LOGGER, response->message.c_str());
-          } */
 
         if(!pick_place_task->hasObject()) {
             response->success = false;
