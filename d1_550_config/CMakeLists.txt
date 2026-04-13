@@ -8,6 +8,7 @@ find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+#find_package(geometry_msgs REQUIRED)
 
 include_directories(include)
 
@@ -20,6 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PickAndPlaceObject.srv"
   "srv/PickObject.srv"
   "srv/PlaceObject.srv"
+  #DEPENDENCIES geometry_msgs
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target
