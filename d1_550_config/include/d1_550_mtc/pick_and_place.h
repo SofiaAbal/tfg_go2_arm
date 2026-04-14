@@ -34,6 +34,7 @@ class PickAndPlace
 public:
   explicit PickAndPlace(const rclcpp::Node::SharedPtr& node);
 
+  void normalizeShape(ObjectParams& params);
   void setupPlanningScene(const ObjectParams& params);
   void setupObstacles();
   bool doPickAndPlaceTask(const ObjectParams& params);
