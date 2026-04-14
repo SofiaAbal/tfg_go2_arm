@@ -24,7 +24,6 @@ struct ObjectParams {
   std::string shape;
   double dimension_x, dimension_y = 0.0, dimension_z = 0.0;
   double rot_x = 0.0, rot_y = 0.0, rot_z = 0.0; // rad
-  double strength = 1.1; // de base algo apretado para que no "caiga"
 
   // place params
   double place_x, place_y, place_z;
@@ -35,6 +34,7 @@ class PickAndPlace
 public:
   explicit PickAndPlace(const rclcpp::Node::SharedPtr& node);
 
+  void normalizeShape(ObjectParams& params);
   void setupPlanningScene(const ObjectParams& params);
   void setupObstacles();
   bool doPickAndPlaceTask(const ObjectParams& params);

@@ -54,6 +54,7 @@ int main(int argc, char** argv)
             return;
           }
 
+          pick_place_task->normalizeShape(params);
           pick_place_task->setupPlanningScene(params);
           response->success = pick_place_task->doPickTask(params);
           if (response->success) {

@@ -21,7 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PickAndPlaceObject.srv"
   "srv/PickObject.srv"
   "srv/PlaceObject.srv"
-  #DEPENDENCIES geometry_msgs
+  DEPENDENCIES geometry_msgs
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target

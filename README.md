@@ -35,7 +35,7 @@ Podemos hacer que nuestro brazo manipule diferentes tipos de objetos. Los tipos 
     - dimension_x = altura
     - dimension_y = radio
 - **SPHERE:**
-    - dimension_x = radio
+    - dimension_y = radio
 
 > No es necesario informar los componentes que no vayamos a utilizar.
 

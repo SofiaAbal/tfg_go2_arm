@@ -13,23 +13,22 @@ PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node)
 
 void setObjectData(shape_msgs::msg::SolidPrimitive& primitive, const ObjectParams& params)
 {
-  std::string shape_upper = params.shape;
-  std::transform(shape_upper.begin(), shape_upper.end(), shape_upper.begin(), [](unsigned char c){ return std::toupper(c); });
+  std::string shape = params.shape;
 
-  if (shape_upper == BOX) {
+  if (shape == BOX) {
     primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
     primitive.dimensions = { params.dimension_x, params.dimension_y, params.dimension_z };
-  } else if (shape_upper == CYLINDER) {
+  } else if (shape == CYLINDER) {
     primitive.type = shape_msgs::msg::SolidPrimitive::CYLINDER;
     primitive.dimensions = { params.dimension_x, params.dimension_y };
-  } else if (shape_upper == CONE) {
+  } else if (shape == CONE) {
     primitive.type = shape_msgs::msg::SolidPrimitive::CONE;
     primitive.dimensions = { params.dimension_x, params.dimension_y };
-  } else if (shape_upper == SPHERE) {
+  } else if (shape == SPHERE) {
     primitive.type = shape_msgs::msg::SolidPrimitive::SPHERE;
-    primitive.dimensions = { params.dimension_x };
+    primitive.dimensions = { params.dimension_y };
   } else {
-    throw std::runtime_error(fmt::format(ERROR_INVALID_SHAPE, params.shape));
+    throw std::runtime_error(fmt::format(ERROR_INVALID_SHAPE, shape));
   }
 }
 
@@ -105,6 +104,11 @@ moveit_msgs::msg::CollisionObject defineGround() {
   object.primitive_poses.push_back(pose);
 
   return object;
+}
+
+void PickAndPlace::normalizeShape(ObjectParams& params)
+{
+  std::transform(params.shape.begin(), params.shape.end(), params.shape.begin(), [](unsigned char c){ return std::toupper(c); });
 }
 
 void PickAndPlace::setupPlanningScene(const ObjectParams& params)
@@ -259,7 +263,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_GRASP_POSE);
       stage->setPreGraspPose(STAGE_GRASP_POSE);
       stage->setObject(OBJECT);
-      stage->setAngleDelta(M_PI / 12);
+      stage->setAngleDelta(M_PI / 6);
       stage->setMonitoredStage(current_state_ptr);
 
       Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
@@ -298,15 +302,16 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       auto stage = std::make_unique<mtc::stages::MoveTo>(CLOSE_HAND_STAGE, interpolation_planner);
       stage->setGroup(hand_group_name);
       /* stage->setGoal(STAGE_GOAL_GRIPPER_CLOSED); */
-      double object_width = params.dimension_y;
-      double grasp_width = object_width * params.strength; // añadimos fuerza para que apriete
+
+      double object_width = (params.shape == BOX) ? params.dimension_y / 2 : params.dimension_y;
+      double grasp_width = 0.033 - object_width + STRENGTH;
       // explicación-> 0: pinza en la esquina, 0.033: pinza se desplaza hacia el centro
 
-      std::map<std::string, double> target;
-      target[JOINT_L] = grasp_width;
-      target[JOINT_R] = grasp_width;
+        std::map<std::string, double> target;
+        target[JOINT_L] = grasp_width;
+        target[JOINT_R] = grasp_width;
 
-      stage->setGoal(target);
+        stage->setGoal(target);
       
       grasp->insert(std::move(stage));
     }
@@ -458,7 +463,7 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
       place->insert(std::move(stage));
     }
 
-    // Retiramos la mano de forma verticar para evitar colisiones con el perro/suelo
+    // Retiramos la mano de forma verticar para evitar colis iones con el perro/suelo
     {
       auto stage =
           std::make_unique<mtc::stages::MoveRelative>(RETREAT_STAGE, cartesian_planner);
