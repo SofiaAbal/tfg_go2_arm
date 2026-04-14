@@ -73,3 +73,7 @@ static constexpr const char* PICK_OBJECT_CONTAINER = "pick object";
 // Error messages
 static constexpr const char* ERROR_INVALID_SHAPE = "Shape '%s' is not valid. Use 'BOX', 'CYLINDER', 'CONE' or 'SPHERE'.";
 static constexpr const char* ERROR_PLANNING_FAILED = "Planning failed";
+
+// Joints
+static constexpr const char* JOINT_L = "Joint_L";
+static constexpr const char* JOINT_R = "Joint_R";

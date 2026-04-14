@@ -297,7 +297,17 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
     {
       auto stage = std::make_unique<mtc::stages::MoveTo>(CLOSE_HAND_STAGE, interpolation_planner);
       stage->setGroup(hand_group_name);
-      stage->setGoal(STAGE_GOAL_GRIPPER_CLOSED);
+      /* stage->setGoal(STAGE_GOAL_GRIPPER_CLOSED); */
+      double object_width = params.dimension_y;
+      double grasp_width = object_width * params.strength; // añadimos fuerza para que apriete
+      // explicación-> 0: pinza en la esquina, 0.033: pinza se desplaza hacia el centro
+
+      std::map<std::string, double> target;
+      target[JOINT_L] = grasp_width;
+      target[JOINT_R] = grasp_width;
+
+      stage->setGoal(target);
+      
       grasp->insert(std::move(stage));
     }
 
