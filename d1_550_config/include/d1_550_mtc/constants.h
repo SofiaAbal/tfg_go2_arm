@@ -80,3 +80,4 @@ static constexpr const char* JOINT_R = "Joint_R";
 
 // Values
 static constexpr double STRENGTH = 0.003;
+static constexpr double GRASP_OFFSET = 0.05;

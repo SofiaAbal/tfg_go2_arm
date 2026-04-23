@@ -61,12 +61,24 @@ ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_
 ### División de la tarea
 
 Actualmente tenemos soporte de dos servicios independientes para la tarea pick and place:
-- Servicio PickObject
+
+
+- Servicio PickObject (side pick)
 ```
-ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_y: 0.4, pick_z: -0.05, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, rot_x: 3, rot_y: -1, rot_z: 0.2}"
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_y: 0.4, pick_z: -0.05, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, rot_x: 3, rot_y: -1, rot_z: 0.2, pick_grasp: side}"
 ```
 
-- Servicio PlaceObject
+- Servicio PlaceObject (side pick)
 ```
-ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, place_y: -0.3, place_z: -0.05}"
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, place_y: -0.3, place_z: -0.05, place_grasp: side}"
+```
+
+- Servicio PickObject (top pick)
+```
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.0, pick_y: 0.3, pick_z: -0.05, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, pick_grasp: top}"
+```
+
+- Servicio PlaceObject (top pick)
+```
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: -0.3, place_z: -0.05, place_grasp: top}"
 ```

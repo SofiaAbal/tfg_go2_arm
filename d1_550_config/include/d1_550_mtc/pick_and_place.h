@@ -24,9 +24,11 @@ struct ObjectParams {
   std::string shape;
   double dimension_x, dimension_y = 0.0, dimension_z = 0.0;
   double rot_x = 0.0, rot_y = 0.0, rot_z = 0.0; // rad
+  std::string pick_grasp;
 
   // place params
   double place_x, place_y, place_z;
+  std::string place_grasp;
 };
 
 class PickAndPlace

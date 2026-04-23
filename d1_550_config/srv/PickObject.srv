@@ -8,6 +8,7 @@ float64 dimension_z
 float64 rot_x
 float64 rot_y
 float64 rot_z
+string pick_grasp
 ---
 bool    success
 string  message
