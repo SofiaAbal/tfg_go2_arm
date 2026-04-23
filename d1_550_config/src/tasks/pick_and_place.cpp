@@ -247,13 +247,35 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       stage->setMinMaxDistance(0.01, 0.10);
 
       geometry_msgs::msg::Vector3Stamped vec;
-      vec.header.frame_id = hand_frame;
-      vec.vector.x = 1.0;
-      vec.vector.y = 1.0;
-      vec.vector.z = 1.0;
+      if(params.pick_grasp == "side") {
+        vec.header.frame_id = hand_frame;
+        vec.vector.x = 1.0;
+        vec.vector.y = 1.0;
+        vec.vector.z = 1.0;
+      } else {
+        vec.header.frame_id = WORLD;
+        vec.vector.z = -1.0;
+      }
       stage->setDirection(vec);
 
       grasp->insert(std::move(stage));
+    }
+
+    // Permitimos colisión entre la mano y el objeto a manipular para poder agarrarlo
+    {
+      if(params.pick_grasp == "top") {
+        auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+            ALLOW_COLLISIONS_HAND_OBJECT_STAGE);
+
+        stage->allowCollisions(
+            OBJECT,
+            task.getRobotModel()
+                ->getJointModelGroup(hand_group_name)
+                ->getLinkModelNamesWithCollisionGeometry(),
+            true);
+
+        grasp->insert(std::move(stage));
+      }
     }
 
     // Generamos pose de agarre
@@ -263,15 +285,21 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_GRASP_POSE);
       stage->setPreGraspPose(STAGE_GRASP_POSE);
       stage->setObject(OBJECT);
-      stage->setAngleDelta(M_PI / 6);
       stage->setMonitoredStage(current_state_ptr);
 
       Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
-      grasp_frame_transform.translation().x() = 0.1;
+      if(params.pick_grasp == "side") {
+        stage->setAngleDelta(M_PI / 6);
+        grasp_frame_transform.translation().x() = 0.1;
+      } else {
+        Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
+        grasp_frame_transform.rotate(rot_y);
+        grasp_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+      }
 
       auto wrapper =std::make_unique<mtc::stages::ComputeIK>(GRASP_POSE_IK_STAGE, std::move(stage));
-      wrapper->setMaxIKSolutions(8);
-      wrapper->setMinSolutionDistance(1.0);
+      //wrapper->setMaxIKSolutions(if (params.pick_grasp == "side" ? 8 : 50));
+      wrapper->setMinSolutionDistance(0.1);
       wrapper->setIKFrame(grasp_frame_transform, hand_frame);
       wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY });
       wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { STAGE_TARGET_POSE });
@@ -415,18 +443,32 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
       target_pose_msg.pose.position.x = params.place_x;
       target_pose_msg.pose.position.y = params.place_y;
       target_pose_msg.pose.position.z = params.place_z;
-      target_pose_msg.pose.orientation.w = 1.0;
+      
+      if(params.pick_grasp == "side") {
+        target_pose_msg.pose.orientation.w = 1.0;
+      } else {
+        tf2::Quaternion q;
+        q.setRPY(0, M_PI/2, 0); // o equivalente a tu rot_y
+        q.normalize();
+        target_pose_msg.pose.orientation = tf2::toMsg(q);
+      }
 
+      Eigen::Isometry3d place_frame_transform = Eigen::Isometry3d::Identity();
       stage->setPose(target_pose_msg);
       stage->setMonitoredStage(current_state_ptr);
 
-      Eigen::Isometry3d place_frame_transform = Eigen::Isometry3d::Identity();
-      place_frame_transform.translation().x() = 0.1;
+      if(params.pick_grasp == "top") {
+        Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
+        place_frame_transform.rotate(rot_y);
+        place_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+      } else {
+        place_frame_transform.translation().x() = 0.1;
+      }      
 
       auto wrapper = std::make_unique<mtc::stages::ComputeIK>(PLACE_POSE_IK_STAGE, std::move(stage));
 
-      wrapper->setMaxIKSolutions(8);
-      wrapper->setMinSolutionDistance(1.0);
+      wrapper->setMaxIKSolutions(50);
+      wrapper->setMinSolutionDistance(0.1);
       wrapper->setIKFrame(place_frame_transform, hand_frame);
       wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY });
       wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { STAGE_TARGET_POSE });
@@ -469,13 +511,17 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
           std::make_unique<mtc::stages::MoveRelative>(RETREAT_STAGE, cartesian_planner);
 
       stage->properties().configureInitFrom(mtc::Stage::PARENT, { GROUP_PROPERTY });
-      stage->setMinMaxDistance(0.05, 0.15);
+      stage->setMinMaxDistance(0.01, 0.1);
       stage->setIKFrame(hand_frame);
       stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_RETREAT);
 
       geometry_msgs::msg::Vector3Stamped vec;
       vec.header.frame_id = WORLD;
-      vec.vector.z = 1.0;
+      if(params.pick_grasp == "side") {
+        vec.vector.z = 1.0;
+      } else {
+        vec.vector.z = -1.0;
+      }
       stage->setDirection(vec);
 
       place->insert(std::move(stage));

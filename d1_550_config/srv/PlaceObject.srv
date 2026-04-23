@@ -1,6 +1,7 @@
 float64 place_x
 float64 place_y
 float64 place_z
+string place_grasp
 ---
 bool    success
 string  message

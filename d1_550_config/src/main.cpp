@@ -23,11 +23,12 @@ int main(int argc, char** argv)
       std::shared_ptr<d1_550_config::srv::PickObject::Response> response)
       {
         RCLCPP_INFO(LOGGER,
-            "Request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - rotation(%.2f, %.2f, %.2f)",
+            "Request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - rotation(%.2f, %.2f, %.2f) - grasp: %s",
             request->pick_x, request->pick_y, request->pick_z,
             request->shape.c_str(),
             request->dimension_x, request->dimension_y, request->dimension_z,
-            request->rot_x, request->rot_y, request->rot_z
+            request->rot_x, request->rot_y, request->rot_z,
+            request->pick_grasp.c_str()
           );
         
         try
@@ -42,7 +43,8 @@ int main(int argc, char** argv)
           .dimension_z = request->dimension_z,
           .rot_x = request->rot_x,
           .rot_y = request->rot_y,
-          .rot_z = request->rot_z
+          .rot_z = request->rot_z,
+          .pick_grasp = request->pick_grasp
           };
 
           // Comprobamos objeto
@@ -79,8 +81,9 @@ int main(int argc, char** argv)
       std::shared_ptr<d1_550_config::srv::PlaceObject::Response> response)
       {
         RCLCPP_INFO(LOGGER,
-            "Request: 'place(%.2f, %.2f, %.2f)'",
-            request->place_x, request->place_y, request->place_z
+            "Request: 'place(%.2f, %.2f, %.2f)' - grasp: %s",
+            request->place_x, request->place_y, request->place_z,
+            request->place_grasp.c_str()
           );
         
         try
@@ -88,7 +91,8 @@ int main(int argc, char** argv)
           ObjectParams params {
           .place_x = request->place_x,
           .place_y = request->place_y,
-          .place_z = request->place_z
+          .place_z = request->place_z,
+          .place_grasp = request->place_grasp
         };
 
         if(!pick_place_task->hasObject()) {
