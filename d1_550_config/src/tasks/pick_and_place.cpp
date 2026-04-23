@@ -262,7 +262,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
     }
 
     // Permitimos colisión entre la mano y el objeto a manipular para poder agarrarlo
-    {
+    /* {
       if(params.pick_grasp == "top") {
         auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
             ALLOW_COLLISIONS_HAND_OBJECT_STAGE);
@@ -276,7 +276,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
 
         grasp->insert(std::move(stage));
       }
-    }
+    } */
 
     // Generamos pose de agarre
     {
@@ -443,27 +443,37 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
       target_pose_msg.pose.position.x = params.place_x;
       target_pose_msg.pose.position.y = params.place_y;
       target_pose_msg.pose.position.z = params.place_z;
+      target_pose_msg.pose.orientation.w = 1.0;
       
-      if(params.pick_grasp == "side") {
+      /* if(params.pick_grasp == "side") {
         target_pose_msg.pose.orientation.w = 1.0;
       } else {
         tf2::Quaternion q;
         q.setRPY(0, M_PI/2, 0); // o equivalente a tu rot_y
         q.normalize();
         target_pose_msg.pose.orientation = tf2::toMsg(q);
-      }
+      } */
 
-      Eigen::Isometry3d place_frame_transform = Eigen::Isometry3d::Identity();
       stage->setPose(target_pose_msg);
       stage->setMonitoredStage(current_state_ptr);
 
-      if(params.pick_grasp == "top") {
+      Eigen::Isometry3d place_frame_transform = Eigen::Isometry3d::Identity();
+      if(params.place_grasp == "side") {
+        place_frame_transform.translation().x() = 0.1;
+      } else {
+        Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
+        place_frame_transform.rotate(rot_y);
+        place_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+      }
+      
+
+      /* if(params.pick_grasp == "top") {
         Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
         place_frame_transform.rotate(rot_y);
         place_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
       } else {
         place_frame_transform.translation().x() = 0.1;
-      }      
+      }    */   
 
       auto wrapper = std::make_unique<mtc::stages::ComputeIK>(PLACE_POSE_IK_STAGE, std::move(stage));
 
@@ -517,7 +527,8 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
 
       geometry_msgs::msg::Vector3Stamped vec;
       vec.header.frame_id = WORLD;
-      if(params.pick_grasp == "side") {
+      
+      if(params.place_grasp == "side") {
         vec.vector.z = 1.0;
       } else {
         vec.vector.z = -1.0;
