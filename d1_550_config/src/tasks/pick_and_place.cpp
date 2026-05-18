@@ -8,6 +8,7 @@ namespace mtc = moveit::task_constructor;
 PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node)
 : node_(node) {
   setupObstacles();
+  setupExtraObstacles();
   rclcpp::sleep_for(std::chrono::milliseconds(500));
 }
 
@@ -106,6 +107,87 @@ moveit_msgs::msg::CollisionObject defineGround() {
   return object;
 }
 
+moveit_msgs::msg::CollisionObject defineTable() {
+  moveit_msgs::msg::CollisionObject object;
+  object.id = TABLE;
+  object.header.frame_id = WORLD;
+
+  object.primitives.resize(1);
+  setObjectData(object.primitives[0], ObjectParams{.shape=BOX, .dimension_x=1, .dimension_y=0.5, .dimension_z=0.01});
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = 0;
+  pose.position.y = 0.6;
+  pose.position.z = 0.1;
+  pose.orientation.w = 1.0;
+
+  /* object.pose = pose; */
+  object.primitive_poses.push_back(pose);
+
+  return object;
+}
+
+moveit_msgs::msg::CollisionObject defineTableLeg(const std::string& id, double x, double y) {
+  moveit_msgs::msg::CollisionObject object;
+  object.id = id;
+  object.header.frame_id = WORLD;
+ 
+  object.primitives.resize(1);
+
+  setObjectData(object.primitives[0], ObjectParams{
+    .shape = BOX,
+    .dimension_x = 0.01,
+    .dimension_y = 0.01,
+    .dimension_z = 0.3
+  });
+ 
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = x;
+  pose.position.y = y;
+  pose.position.z = -0.05;
+  pose.orientation.w = 1.0;
+ 
+  object.primitive_poses.push_back(pose);
+  return object;
+}
+
+
+moveit_msgs::msg::CollisionObject defineTableLegFrontLeft() {
+  return defineTableLeg(TABLE_LEG_FRONT_LEFT, -0.4, 0.5);
+}
+ 
+moveit_msgs::msg::CollisionObject defineTableLegFrontRight() {
+  return defineTableLeg(TABLE_LEG_FRONT_RIGHT, 0.5, 0.5);
+}
+ 
+moveit_msgs::msg::CollisionObject defineTableLegBackLeft() {
+  return defineTableLeg(TABLE_LEG_BACK_LEFT, -0.4, 0.9);
+}
+ 
+moveit_msgs::msg::CollisionObject defineTableLegBackRight() {
+  return defineTableLeg(TABLE_LEG_BACK_RIGHT, 0.5, 0.9);
+}
+
+moveit_msgs::msg::CollisionObject defineButton(const ObjectParams& params) {
+  moveit_msgs::msg::CollisionObject object;
+  object.id = BUTTON;
+  object.header.frame_id = WORLD;
+
+  object.primitives.resize(1);
+  setObjectData(object.primitives[0], ObjectParams{.shape=BOX, .dimension_x=0.05, .dimension_y=0.05, .dimension_z=0.05});
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = params.push_x;
+  pose.position.y = params.push_y;
+  pose.position.z = params.push_z;
+  pose.orientation.w = 1.0;
+
+  /* object.pose = pose; */
+  object.primitive_poses.push_back(pose);
+
+  return object;
+}
+
 void PickAndPlace::normalizeShape(ObjectParams& params)
 {
   std::transform(params.shape.begin(), params.shape.end(), params.shape.begin(), [](unsigned char c){ return std::toupper(c); });
@@ -119,6 +201,14 @@ void PickAndPlace::setupPlanningScene(const ObjectParams& params)
   psi.applyCollisionObject(object);
 }
 
+void PickAndPlace::setupPushScene(const ObjectParams& params)
+{
+  // Definimos el objeto a pulsar
+  moveit_msgs::msg::CollisionObject button = defineButton(params);
+  moveit::planning_interface::PlanningSceneInterface psi;
+  psi.applyCollisionObject(button);
+}
+
 void PickAndPlace::setupObstacles()
 {
   // Definimos obstáculos en la escena: perro y suelo
@@ -129,6 +219,29 @@ void PickAndPlace::setupObstacles()
 
   moveit_msgs::msg::CollisionObject dog = defineDog();
   psi.applyCollisionObject(dog);
+}
+
+void PickAndPlace::setupExtraObstacles()
+{
+  // Definimos obstáculos en la escena: perro y suelo
+  moveit::planning_interface::PlanningSceneInterface psi;
+
+  moveit_msgs::msg::CollisionObject table = defineTable();
+  psi.applyCollisionObject(table);
+
+  moveit_msgs::msg::CollisionObject leg_front_left = defineTableLegFrontLeft();
+  psi.applyCollisionObject(leg_front_left);
+ 
+  moveit_msgs::msg::CollisionObject leg_front_right = defineTableLegFrontRight();
+  psi.applyCollisionObject(leg_front_right);
+ 
+  moveit_msgs::msg::CollisionObject leg_back_left = defineTableLegBackLeft();
+  psi.applyCollisionObject(leg_back_left);
+ 
+  moveit_msgs::msg::CollisionObject leg_back_right = defineTableLegBackRight();
+  psi.applyCollisionObject(leg_back_right);
+
+
 }
 
 bool PickAndPlace::doPickTask(const ObjectParams& params)
@@ -187,6 +300,31 @@ bool PickAndPlace::doPlaceTask(const ObjectParams& params)
   return success;
 }
 
+bool PickAndPlace::doPushTask(const ObjectParams& params)
+{
+  task_ = createPushTask(params);
+
+  try {
+    task_.init();
+  } catch (mtc::InitStageException& e) {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), e);
+    return false;
+  }
+
+  if (!task_.plan(5)) {
+    RCLCPP_ERROR(node_->get_logger(), ERROR_PLANNING_FAILED);
+    return false;
+  }
+
+  task_.introspection().publishSolution(*task_.solutions().front());
+
+  auto result = task_.execute(*task_.solutions().front());
+
+  auto success = result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS;
+
+  return success;
+}
+
 mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
 {
   mtc::Task task;
@@ -224,7 +362,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
   // Movemos el efector final cerca del objeto a manipular con un planificador de movimientos de robot (RRTConnect) ??
   auto stage_move_to_pick = std::make_unique<mtc::stages::Connect>(MOVE_TO_PICK_STAGE,
     mtc::stages::Connect::GroupPlannerVector{ { arm_group_name, sampling_planner } });
-  stage_move_to_pick->setTimeout(10.0);
+  stage_move_to_pick->setTimeout(30.0);
   stage_move_to_pick->properties().configureInitFrom(mtc::Stage::PARENT);
   task.add(std::move(stage_move_to_pick));
 
@@ -261,22 +399,20 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       grasp->insert(std::move(stage));
     }
 
-    // Permitimos colisión entre la mano y el objeto a manipular para poder agarrarlo
-    /* {
-      if(params.pick_grasp == "top") {
-        auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
-            ALLOW_COLLISIONS_HAND_OBJECT_STAGE);
+      // Permitimos colisión entre la mano y el objeto a manipular para poder agarrarlo
+    {
+      auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+          ALLOW_COLLISIONS_HAND_OBJECT_STAGE);
 
-        stage->allowCollisions(
-            OBJECT,
-            task.getRobotModel()
-                ->getJointModelGroup(hand_group_name)
-                ->getLinkModelNamesWithCollisionGeometry(),
-            true);
+      stage->allowCollisions(
+          OBJECT,
+          task.getRobotModel()
+              ->getJointModelGroup(hand_group_name)
+              ->getLinkModelNamesWithCollisionGeometry(),
+          true);
 
-        grasp->insert(std::move(stage));
-      }
-    } */
+      grasp->insert(std::move(stage));
+    }
 
     // Generamos pose de agarre
     {
@@ -297,6 +433,21 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
         grasp_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
       }
 
+        // Permitimos colisión entre la mano y el objeto a manipular para poder agarrarlo
+    {
+      auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+          FORBID_COLLISIONS_HAND_OBJECT_STAGE);
+
+      stage->allowCollisions(
+          OBJECT,
+          task.getRobotModel()
+              ->getJointModelGroup(hand_group_name)
+              ->getLinkModelNamesWithCollisionGeometry(),
+          false);
+
+      grasp->insert(std::move(stage));
+    }
+
       auto wrapper =std::make_unique<mtc::stages::ComputeIK>(GRASP_POSE_IK_STAGE, std::move(stage));
       //wrapper->setMaxIKSolutions(if (params.pick_grasp == "side" ? 8 : 50));
       wrapper->setMinSolutionDistance(0.1);
@@ -310,7 +461,6 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       grasp->insert(std::move(wrapper));
     }
 
-    // Permitimos colisión entre la mano y el objeto a manipular para poder agarrarlo
     {
       auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
           ALLOW_COLLISIONS_HAND_OBJECT_STAGE);
@@ -357,7 +507,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       auto stage = std::make_unique<mtc::stages::MoveRelative>(LIFT_OBJECT_STAGE, cartesian_planner);
 
       stage->properties().configureInitFrom(mtc::Stage::PARENT, { GROUP_PROPERTY });
-      stage->setMinMaxDistance(0.1, 0.3);
+      stage->setMinMaxDistance(0.01, 0.1);
       stage->setIKFrame(hand_frame);
       stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_LIFT_OBJECT);
 
@@ -405,14 +555,13 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
 
   cartesian_planner->setMaxVelocityScalingFactor(1.0);
   cartesian_planner->setMaxAccelerationScalingFactor(1.0);
-  cartesian_planner->setStepSize(0.0001);
+  cartesian_planner->setStepSize(0.001);
 
   // current state
   auto current_state = std::make_unique<mtc::stages::CurrentState>(CURRENT_STATE_TASK);
   mtc::stages::CurrentState* current_state_ptr = current_state.get();
   task.add(std::move(current_state));
 
-  // ??
   {
     auto stage_move_to_place = std::make_unique<mtc::stages::Connect>(
         MOVE_TO_PLACE_STAGE,
@@ -546,8 +695,15 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
     auto stage = std::make_unique<mtc::stages::MoveTo>(RETURN_HOME_STAGE, interpolation_planner);
     stage->properties().configureInitFrom(mtc::Stage::PARENT, { GROUP_PROPERTY });
     stage->setGoal(STAGE_GOAL_ARM_START);
+    stage->setTimeout(10.0);
     task.add(std::move(stage));
   }
 
+  return task;
+}
+
+mtc::Task PickAndPlace::createPushTask(const ObjectParams& params)
+{
+  mtc::Task task;
   return task;
 }

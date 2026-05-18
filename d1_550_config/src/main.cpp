@@ -1,6 +1,7 @@
 #include "d1_550_mtc/pick_and_place.h"
 #include "d1_550_config/srv/pick_object.hpp"
 #include "d1_550_config/srv/place_object.hpp"
+#include "d1_550_config/srv/push_object.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -115,9 +116,43 @@ int main(int argc, char** argv)
         }
         RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
       });
-  
+
 
   RCLCPP_INFO(LOGGER, "Servicio place_object activo. Esperando parámetros del objeto...");
+
+  auto servicePush = node->create_service<d1_550_config::srv::PushObject>("push_object",
+      [&](const std::shared_ptr<d1_550_config::srv::PushObject::Request> request,
+      std::shared_ptr<d1_550_config::srv::PushObject::Response> response)
+      {
+        RCLCPP_INFO(LOGGER,
+            "Request: 'push(%.2f, %.2f, %.2f)'",
+            request->push_x, request->push_y, request->push_z
+          );
+        
+        try
+        {
+          ObjectParams params {
+          .push_x = request->push_x,
+          .push_y = request->push_y,
+          .push_z = request->push_z
+        };
+
+        pick_place_task->setupPushScene(params);
+        response->success = pick_place_task->doPushTask(params);
+        response->message = response->success
+            ? "Tarea push completada correctamente"
+            : "Error durante la planificación o ejecución de push";
+        }
+        catch(const std::exception& e)
+        {
+          response->success = false;
+          response->message = e.what();
+        }
+        RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
+      });
+
+
+  RCLCPP_INFO(LOGGER, "Servicio push_object activo. Esperando parámetros del objeto...");
 
   /* spin_thread.join(); */
 

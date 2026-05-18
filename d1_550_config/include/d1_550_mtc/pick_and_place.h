@@ -29,6 +29,9 @@ struct ObjectParams {
   // place params
   double place_x, place_y, place_z;
   std::string place_grasp;
+
+  // push params
+  double push_x, push_y, push_z;
 };
 
 class PickAndPlace
@@ -39,15 +42,19 @@ public:
   void normalizeShape(ObjectParams& params);
   void setupPlanningScene(const ObjectParams& params);
   void setupObstacles();
+  void setupExtraObstacles();
   bool doPickAndPlaceTask(const ObjectParams& params);
   bool doPickTask(const ObjectParams& params);
   bool doPlaceTask(const ObjectParams& params);
   bool hasObject() const { return has_object_; }
+  void setupPushScene(const ObjectParams& params);
+  bool doPushTask(const ObjectParams& params);
 
 private:
   mtc::Task createPickAndPlaceTask(const ObjectParams& params);
   mtc::Task createPickTask(const ObjectParams& params);
   mtc::Task createPlaceTask(const ObjectParams& params);
+  mtc::Task createPushTask(const ObjectParams& params);
 
   rclcpp::Node::SharedPtr node_;
   mtc::Task task_;

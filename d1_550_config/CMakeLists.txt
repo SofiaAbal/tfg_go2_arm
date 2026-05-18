@@ -21,6 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PickAndPlaceObject.srv"
   "srv/PickObject.srv"
   "srv/PlaceObject.srv"
+  "srv/PushObject.srv"
   DEPENDENCIES geometry_msgs
 )
 
