@@ -4,6 +4,7 @@
 
 En la carpeta de nuestro workspace, debemos debemos tener los paquetes necesarios bajo el directorio /src. Para compilar el proyecto:
 ```
+source /opt/ros/humble/setup.bash 
 colcon build
 source install/setup.bash
 ```
@@ -12,12 +13,15 @@ source install/setup.bash
 
 Para lanzar el brazo con el visualizador:
 ```
+source /opt/ros/humble/setup.bash 
+source install/setup.bash
 ros2 launch d1_550_config d1_550_demo.launch.py
 ```
 
 Para lanzar el script que nos permite recoger un objeto y moverlo:
 ```
-# En un terminal nuevo (previo source)
+source /opt/ros/humble/setup.bash
+source install/setup.bash
 ros2 launch d1_550_config main_demo.launch.py
 ```
 
@@ -62,6 +66,10 @@ ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_
 
 Actualmente tenemos soporte de dos servicios independientes para la tarea pick and place:
 
+```
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+```
 
 - Servicio PickObject (side pick)
 ```
@@ -70,15 +78,15 @@ ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_
 
 - Servicio PickObject (side pick con nesa)
 ```
-ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: -0.2, pick_y: 0.6, pick_z: 0.2, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, pick_grasp: side}"
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: -0.2, pick_y: 0.5, pick_z: 0.2, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, pick_grasp: side}"
 ```
 
-- Servicio PlaceObject (side pick)
+- Servicio PlaceObject (side place)
 ```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, place_y: -0.3, place_z: -0.05, place_grasp: side}"
 ```
 
-- Servicio PlaceObject (side pick con mesa)
+- Servicio PlaceObject (side place con mesa)
 ```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, place_y: 0.3, place_z: -0.05, place_grasp: side}"
 ```
@@ -88,7 +96,7 @@ ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.3, pl
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.0, pick_y: 0.3, pick_z: -0.05, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, pick_grasp: top}"
 ```
 
-- Servicio PlaceObject (top pick)
+- Servicio PlaceObject (top place)
 ```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: -0.3, place_z: -0.05, place_grasp: top}"
 ```
