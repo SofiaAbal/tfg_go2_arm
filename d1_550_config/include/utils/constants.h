@@ -75,6 +75,7 @@ static constexpr const char* STAGE_MARKER_NS_PUSH_OBJECT = "push_object";
 
 static constexpr const char* STAGE_TARGET_POSE = "target_pose";
 static constexpr const char* STAGE_GRASP_POSE = "gripper_open";
+static constexpr const char* STAGE_PUSH_POSE = "gripper_closed";
 
 static constexpr const char* STAGE_GOAL_GRIPPER_OPEN = "gripper_open";
 static constexpr const char* STAGE_GOAL_GRIPPER_CLOSED = "gripper_closed";

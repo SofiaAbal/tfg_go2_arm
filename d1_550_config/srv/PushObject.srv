@@ -1,6 +1,7 @@
 float64 push_x
 float64 push_y
 float64 push_z
+string push_grasp
 ---
 bool    success
 string  message

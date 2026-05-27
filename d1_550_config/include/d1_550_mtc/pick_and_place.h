@@ -32,6 +32,7 @@ struct ObjectParams {
 
   // push params
   double push_x, push_y, push_z;
+  std::string push_grasp;
 };
 
 class PickAndPlace

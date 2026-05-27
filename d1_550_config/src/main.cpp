@@ -125,8 +125,9 @@ int main(int argc, char** argv)
       std::shared_ptr<d1_550_config::srv::PushObject::Response> response)
       {
         RCLCPP_INFO(LOGGER,
-            "Request: 'push(%.2f, %.2f, %.2f)'",
-            request->push_x, request->push_y, request->push_z
+            "Request: 'push(%.2f, %.2f, %.2f)' - grasp: %s",
+            request->push_x, request->push_y, request->push_z,
+            request->push_grasp.c_str()
           );
         
         try
@@ -134,7 +135,8 @@ int main(int argc, char** argv)
           ObjectParams params {
           .push_x = request->push_x,
           .push_y = request->push_y,
-          .push_z = request->push_z
+          .push_z = request->push_z,
+          .push_grasp = request->push_grasp
         };
 
         pick_place_task->setupPushScene(params);

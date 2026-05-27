@@ -106,10 +106,16 @@ ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, pl
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: 0.3, place_z: -0.1, place_grasp: top}"
 ```
 
-- Servicio push button
+- Servicio push button (side grasp)
 ```
-ros2 service call /push_object d1_550_config/srv/PushObject "{push_x: 1.0, push_y: 0.0, push_z: 0.0}"
+ros2 service call /push_object d1_550_config/srv/PushObject "{push_x: 0.5, push_y: 0.0, push_z: 0.1, push_grasp: side}"
 ```
+
+- Servicio push button (top grasp)
+```
+ros2 service call /push_object d1_550_config/srv/PushObject "{push_x: 0.3, push_y: 0.0, push_z: 0, push_grasp: top}"
+```
+
 
 ## Robot real
 
