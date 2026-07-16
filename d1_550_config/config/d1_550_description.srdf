@@ -59,6 +59,16 @@
         <joint name="Joint_L" value="0.033"/>
         <joint name="Joint_R" value="0.033"/>
     </group_state>
+    <group_state name="arm_pose_1" group="d1_full">
+        <joint name="Joint1" value="0"/>
+        <joint name="Joint2" value="1.012"/>
+        <joint name="Joint3" value="0.349"/>
+        <joint name="Joint4" value="0"/>
+        <joint name="Joint5" value="-1.344"/>
+        <joint name="Joint6" value="0"/>
+        <joint name="Joint_L" value="0.033"/>
+        <joint name="Joint_R" value="0.033"/>
+    </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="gripper" parent_link="Empty_Link6" group="d1_gripper"/>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->

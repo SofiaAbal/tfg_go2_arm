@@ -61,7 +61,6 @@ ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_
 
 ```
 
-
 ### División de la tarea
 
 Actualmente tenemos soporte de dos servicios independientes para la tarea pick and place:
@@ -126,3 +125,52 @@ Para conectarnos con el perro del laboratorio:
 ```
 ssh -X unitree@192.168.123.18
 ```
+
+Para depurar el nuevo driver custom que hemos montado:
+```
+ros2 launch d1_550_config d1_550_demo.launch.py 2>&1 | grep -F "[D1Hardware]:"
+```
+
+
+## Tests simulación
+### Nuevo parámetro 'scene'
+```
+ros2 launch d1_550_config main_demo.launch.py scene_setup:=dog
+ros2 launch d1_550_config main_demo.launch.py scene_setup:=table
+```
+
+Añadido nuevo parámetro de arranque par establecer el lugar sobre el que apoyamos el brazo.
+
+
+### Comandos válidos
+/// mesa
+
+// side grasp enfrente
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.4, pick_y: 0, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: side}"
+
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.4, place_y: 0, place_z: 0.1, place_grasp: side}"
+
+// side grasp lateral
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.0, pick_y: 0.3, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: side}"
+
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: -0.4, place_z: 0.05, place_grasp: side}"
+
+
+// top graps enfrente
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.1, pick_y: 0, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: top}"
+
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: 0, place_z: 0.05, place_grasp: top}"
+
+// top grasps lateral
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.1, pick_y: 0.2, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: top}"
+
+ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: -0.2, place_z: 0.05, place_grasp: top}"
+
+/// perro
+ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0, pick_y: 0.3, pick_z: 0.1, shape: cylinder, dimension_x: 0.08, dimension_y: 0.01, pick_grasp: side}"
+
+
+
+
+///// pick and place
+ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.4, pick_y: 0, pick_z: 0.1, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, grasp: side}"

@@ -1,4 +1,5 @@
 #include "d1_550_mtc/pick_and_place.h"
+#include "d1_550_config/srv/pick_and_place_object.hpp"
 #include "d1_550_config/srv/pick_object.hpp"
 #include "d1_550_config/srv/place_object.hpp"
 #include "d1_550_config/srv/push_object.hpp"
@@ -14,11 +15,13 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
   auto node = std::make_shared<rclcpp::Node>("pick_and_place_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
   
+  std::string scene_setup = node->get_parameter_or<std::string>("scene_setup", "table");
+
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
   /* std::thread spin_thread([&executor]() { executor.spin(); }); */
 
-  auto pick_place_task = std::make_shared<PickAndPlace>(node);
+  auto pick_place_task = std::make_shared<PickAndPlace>(node, scene_setup);
   auto servicePick = node->create_service<d1_550_config::srv::PickObject>("pick_object",
       [&](const std::shared_ptr<d1_550_config::srv::PickObject::Request> request,
       std::shared_ptr<d1_550_config::srv::PickObject::Response> response)
@@ -139,6 +142,15 @@ int main(int argc, char** argv)
           .push_grasp = request->push_grasp
         };
 
+        // Comprobamos objeto
+        if(pick_place_task->hasObject()) {
+          response->success = false;
+          response->message = "Ya tenemos un objeto, es necesario hacer un place antes para soltarlo.";
+          RCLCPP_ERROR(LOGGER, response->message.c_str());
+
+          return;
+        }
+
         pick_place_task->setupPushScene(params);
         response->success = pick_place_task->doPushTask(params);
         response->message = response->success
@@ -155,6 +167,126 @@ int main(int argc, char** argv)
 
 
   RCLCPP_INFO(LOGGER, "Servicio push_object activo. Esperando parámetros del objeto...");
+
+  auto servicePickAndPlace = node->create_service<d1_550_config::srv::PickAndPlaceObject>("pick_and_place_object",
+      [&](const std::shared_ptr<d1_550_config::srv::PickAndPlaceObject::Request> request,
+      std::shared_ptr<d1_550_config::srv::PickAndPlaceObject::Response> response)
+      {
+        RCLCPP_INFO(LOGGER,
+            "Request: 'pick(%.2f, %.2f, %.2f) - place(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - rotation(%.2f, %.2f, %.2f) - grasp: %s",
+            request->pick_x, request->pick_y, request->pick_z,
+            request->place_x, request->place_y, request->place_z,
+            request->shape.c_str(),
+            request->dimension_x, request->dimension_y, request->dimension_z,
+            request->rot_x, request->rot_y, request->rot_z,
+            request->grasp.c_str()
+          );
+        
+        try
+          {
+          // si no informamrmos del palce, me pilla el pick
+          double place_x = (request->place_x != 0.0) ? request->place_x : request->pick_x;
+          double place_y = (request->place_y != 0.0) ? request->place_y : request->pick_y;
+          double place_z = (request->place_z != 0.0) ? request->place_z : request->pick_z;
+
+          RCLCPP_INFO(LOGGER,
+            "Place position: (%.2f, %.2f, %.2f)",
+            place_x, place_y, place_z
+          );
+
+          ObjectParams params {
+          .pick_x  = request->pick_x,
+          .pick_y  = request->pick_y,
+          .pick_z  = request->pick_z,
+          .shape   = request->shape,
+          .dimension_x = request->dimension_x,
+          .dimension_y = request->dimension_y,
+          .dimension_z = request->dimension_z,
+          .rot_x = request->rot_x,
+          .rot_y = request->rot_y,
+          .rot_z = request->rot_z,
+          .pick_grasp = request->grasp,
+          .place_x = place_x,
+          .place_y = place_y,
+          .place_z = place_z,
+          .place_grasp = request->grasp,
+          };
+
+          // Comprobamos objeto
+          if(pick_place_task->hasObject()) {
+            response->success = false;
+            response->message = "Ya tenemos un objeto, es necesario hacer un place antes para soltarlo.";
+            RCLCPP_ERROR(LOGGER, response->message.c_str());
+
+            return;
+          }
+
+          pick_place_task->normalizeShape(params);
+          pick_place_task->setupPlanningScene(params);
+          response->success = pick_place_task->doPickAndPlaceTask(params);
+          if (response->success) {
+            response->message = "Tarea pick and place realizada correctamente";
+          } else {
+            response->message = "Error durante la planificación o ejecución de pick and place";
+          }
+        }
+        catch(const std::exception& e)
+        {
+          response->success = false;
+          response->message = e.what();
+        }
+        RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
+      });
+
+
+  RCLCPP_INFO(LOGGER, "Servicio pick_place_object activo. Esperando parámetros del objeto...");
+
+  auto servicePlanPick = node->create_service<d1_550_config::srv::PickObject>("plan_pick_object",
+      [&](const std::shared_ptr<d1_550_config::srv::PickObject::Request> request,
+      std::shared_ptr<d1_550_config::srv::PickObject::Response> response)
+      {
+        RCLCPP_INFO(LOGGER,
+            "Plan-only request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - grasp: %s",
+            request->pick_x, request->pick_y, request->pick_z,
+            request->shape.c_str(),
+            request->dimension_x, request->dimension_y, request->dimension_z,
+            request->pick_grasp.c_str()
+          );
+
+        try
+        {
+          ObjectParams params {
+          .pick_x  = request->pick_x,
+          .pick_y  = request->pick_y,
+          .pick_z  = request->pick_z,
+          .shape   = request->shape,
+          .dimension_x = request->dimension_x,
+          .dimension_y = request->dimension_y,
+          .dimension_z = request->dimension_z,
+          .rot_x = request->rot_x,
+          .rot_y = request->rot_y,
+          .rot_z = request->rot_z,
+          .pick_grasp = request->pick_grasp
+          };
+
+          // Sin comprobación de hasObject(): el modo plan-only no
+          // consume ni produce objeto real.
+          pick_place_task->normalizeShape(params);
+          pick_place_task->setupPlanningScene(params);
+          response->success = pick_place_task->planPickTask(params);
+          response->message = response->success
+              ? "Punto alcanzable (plan-only)"
+              : "Punto no alcanzable (plan-only)";
+        }
+        catch(const std::exception& e)
+        {
+          response->success = false;
+          response->message = e.what();
+        }
+        RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
+      });
+
+  RCLCPP_INFO(LOGGER, "Servicio plan_pick_object activo (modo plan-only).");
 
   /* spin_thread.join(); */
 

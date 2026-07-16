@@ -12,7 +12,8 @@ static constexpr const char* SPHERE = "SPHERE";
 
 // Scene objects
 static constexpr const char* DOG = "dog";
-static constexpr const char* GROUND = "ground"; 
+static constexpr const char* GROUND = "ground";
+static constexpr const char* GROUND_TABLE = "ground_table";
 static constexpr const char* OBJECT = "object";
 static constexpr const char* WORLD = "world";
 static constexpr const char* BUTTON = "button";
@@ -38,6 +39,7 @@ static constexpr const char* PICK_TASK = "pick task";
 static constexpr const char* PLACE_TASK = "place task";
 static constexpr const char* CURRENT_STATE_TASK = "current";
 static constexpr const char* PUSH_TASK = "push task";
+static constexpr const char* PICK_AND_PLACE_TASK = "pick and place task";
 
 // Stages
 static constexpr const char* OPEN_HAND_STAGE = "open hand";
@@ -95,3 +97,9 @@ static constexpr const char* JOINT_R = "Joint_R";
 // Values
 static constexpr double STRENGTH = 0.003;
 static constexpr double GRASP_OFFSET = 0.05;
+static constexpr double PUSH_STANDOFF = 0.02;
+
+// Scene setup
+static constexpr const char* PARAM_SCENE_SETUP = "scene_setup";
+static constexpr const char* SCENE_SETUP_TABLE = "table";
+static constexpr const char* SCENE_SETUP_DOG   = "dog";
