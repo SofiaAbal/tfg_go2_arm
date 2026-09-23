@@ -146,31 +146,37 @@ Añadido nuevo parámetro de arranque par establecer el lugar sobre el que apoya
 /// mesa
 
 // side grasp enfrente
+
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.4, pick_y: 0, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: side}"
 
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.4, place_y: 0, place_z: 0.1, place_grasp: side}"
 
 // side grasp lateral
+
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.0, pick_y: 0.3, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: side}"
 
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: -0.4, place_z: 0.05, place_grasp: side}"
 
 
 // top graps enfrente
+
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.1, pick_y: 0, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: top}"
 
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: 0, place_z: 0.05, place_grasp: top}"
 
 // top grasps lateral
+
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.1, pick_y: 0.2, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: top}"
 
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: -0.2, place_z: 0.05, place_grasp: top}"
 
 /// perro
+
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0, pick_y: 0.3, pick_z: 0.1, shape: cylinder, dimension_x: 0.08, dimension_y: 0.01, pick_grasp: side}"
 
 
 
 
 ///// pick and place
+
 ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.4, pick_y: 0, pick_z: 0.1, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, grasp: side}"

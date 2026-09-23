@@ -91,8 +91,9 @@ def generate_launch_description():
         #executable="custom_d1_driver.py",
         executable="d1_driver.py",
         output="both",
-        #additional_env={"D1_IFACE": "enx00e04c681034", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
-        additional_env={"D1_IFACE": "enx00e04c681034", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
+        # old enx00e04c681034
+        #additional_env={"D1_IFACE": "enx00e04c681205", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
+        additional_env={"D1_IFACE": "enx00e04c681205", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
     )
 
     load_controllers = []

@@ -770,7 +770,7 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
       if(params.place_grasp == "side") {
         vec.vector.z = 1.0;
       } else {
-        vec.vector.z = -1.0;
+        vec.vector.z = 1.0;
       }
       stage->setDirection(vec);
 
@@ -1148,6 +1148,12 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
     place->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY, IK_FRAME_PROPERTY });
 
     {
+      auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("allow collision object-support");
+      stage->allowCollisions(OBJECT, TABLE, true);
+      place->insert(std::move(stage));
+    }
+
+    {
       // Generamos la pose de colocación
       auto stage = std::make_unique<mtc::stages::GeneratePlacePose>(GENERATE_PLACE_POSE_STAGE);
       stage->properties().configureInitFrom(mtc::Stage::PARENT);
@@ -1231,10 +1237,16 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
       if(params.place_grasp == "side") {
         vec.vector.z = 1.0;
       } else {
-        vec.vector.z = -1.0;
+        vec.vector.z = 1.0;
       }
       stage->setDirection(vec);
 
+      place->insert(std::move(stage));
+    }
+
+    {
+      auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>("forbid collision object-support");
+      stage->allowCollisions(OBJECT, TABLE, false);
       place->insert(std::move(stage));
     }
 

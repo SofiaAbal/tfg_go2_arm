@@ -9,11 +9,11 @@
                 <!-- <plugin>mock_components/GenericSystem</plugin> -->
 
                 <plugin>d1_550_driver/D1Hardware</plugin>
-                <param name="network_interface">enx00e04c681034</param>
+                <param name="network_interface">enx00e04c681205</param>
 
-                <!-- los topicos que se van a usar -->
-                <param name="joint_commands_topic">/arm_joint_commands</param>
-                <param name="joint_states_topic">/arm_joint_states</param>
+                <!-- los topicos repameaddos -->
+                <!-- <param name="joint_commands_topic">/arm_joint_commands</param>
+                <param name="joint_states_topic">/arm_joint_states</param> -->
 
             </hardware>
             <joint name="Joint1">

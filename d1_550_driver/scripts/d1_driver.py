@@ -4,10 +4,11 @@ import time
 import rclpy
 #import sys
 import math
-import threading
+#import threading
 #import time
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+from moveit_task_constructor_msgs.msg import Solution
 
 from d1_arm import D1Arm
 
@@ -32,13 +33,24 @@ class D1Driver(Node):
         self.arm = D1Arm()
 
         self.state_pub = self.create_publisher(JointState, '/arm_joint_states', 10)
-        self.cmd_sub = self.create_subscription(
-            JointState, '/arm_joint_commands', self._on_command, 10)
+        self.cmd_sub = self.create_subscription(JointState, '/arm_joint_commands', self._on_command, 10)
+        
+        #self.cmd_sub2 = self.create_subscription(Solution, '/solution', self._on_solution, 10)
         
         self._start_arm()
 
         self._state_timer = self.create_timer(0.01, self._publish_state)
 
+    def _on_solution(self, msg: Solution):
+        self.get_logger().info(f">> START SOLUCION>>")
+        #self.get_logger().info(f">> Received solution with {len(msg.sub_trajectories)} sub-trajectories", throttle_duration_sec=0.5)
+        #
+        ## Iterate through the sub-trajectories in the solution
+        #for i, sub_traj in enumerate(msg.sub_trajectories):
+        #    self.get_logger().info(f"  Sub-trajectory {i}: Stage ID {sub_traj.stage_id}")
+        #    if sub_traj.comment:
+        #        self.get_logger().info(f"    Comment: {sub_traj.comment}")
+        #self.get_logger().info(f">> End solution with {len(msg.sub_trajectories)} sub-trajectories", throttle_duration_sec=0.5)
     
     def _start_arm(self):
         self.arm.enable_motors()
@@ -52,21 +64,19 @@ class D1Driver(Node):
         self.arm.zero()
         self.get_logger().info(f'<< Arm moving to zero position >>', throttle_duration_sec=0.5)
         time.sleep(3.0)
-
-        #self.arm.open_gripper()
-        #self.get_logger().info(f'<< Gripper opened >>', throttle_duration_sec=0.5)
-        #time.sleep(2.0)
-
     
     def _on_command(self, msg: JointState):
+        self.get_logger().info(f'<< Command received >>', throttle_duration_sec=2.0)
+
         if not self._running:
             return
 
         joint_deg = [msg.position[i] * R2D * JOINT_SIGN[f'Joint{i+1}'] for i in range(6)]
-        gripper_mm = msg.position[6] * GRIPPER_POS_TO_MM
+        gripper_mm = 65.0 - msg.position[6] * GRIPPER_POS_TO_MM
         self.arm.move_joints(joint_deg, gripper_mm)
 
     def _publish_state(self):
+        # esto lo recuperamos del arm_joint_tates
         for joint_deg, gripper_mm in self.arm.read_joints():
             js = JointState()
             js.header.stamp = self.get_clock().now().to_msg()
@@ -80,7 +90,7 @@ class D1Driver(Node):
             gripper_pos = 0.033 - gripper_mm * GRIPPER_MM_TO_POS
             js.position = joint_rad + [gripper_pos, gripper_pos]
 
-            self.get_logger().info(f' >>>> Joint positions: {js.position[:7]}, Gripper position: {js.position[7]} <<', throttle_duration_sec=0.5)
+            self.get_logger().info(f' >> Joint positions: {js.position[:6]}, Gripper position: {js.position[6]} <<', throttle_duration_sec=1.0)
         
 
             self.state_pub.publish(js)
