@@ -241,12 +241,12 @@ int main(int argc, char** argv)
 
   RCLCPP_INFO(LOGGER, "Servicio pick_place_object activo. Esperando parámetros del objeto...");
 
-  auto servicePlanPick = node->create_service<d1_550_config::srv::PickObject>("plan_pick_object",
+  /* auto servicePlanPick = node->create_service<d1_550_config::srv::PickObject>("plan_pick_object",
       [&](const std::shared_ptr<d1_550_config::srv::PickObject::Request> request,
       std::shared_ptr<d1_550_config::srv::PickObject::Response> response)
       {
         RCLCPP_INFO(LOGGER,
-            "Plan-only request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - grasp: %s",
+            "Request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - grasp: %s",
             request->pick_x, request->pick_y, request->pick_z,
             request->shape.c_str(),
             request->dimension_x, request->dimension_y, request->dimension_z,
@@ -286,7 +286,7 @@ int main(int argc, char** argv)
         RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
       });
 
-  RCLCPP_INFO(LOGGER, "Servicio plan_pick_object activo (modo plan-only).");
+  RCLCPP_INFO(LOGGER, "Servicio plan_pick_object activo (modo plan-only)."); */
 
   /* spin_thread.join(); */
 

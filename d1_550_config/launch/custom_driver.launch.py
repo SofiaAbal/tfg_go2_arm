@@ -6,9 +6,16 @@ from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 
 def generate_launch_description():
-    moveit_config = MoveItConfigsBuilder(
-        "d1_550_description", package_name="d1_550_config"
-    ).to_moveit_configs()
+    # Arm driven by d1_controller_custom (no ros2_control): single "d1" controller
+    moveit_config = (
+        MoveItConfigsBuilder("d1_550_description", package_name="d1_550_config")
+        .trajectory_execution(file_path="config/moveit_controllers_d1_node.yaml")
+        .to_moveit_configs()
+    )
+    # Previous setup (ros2_control + D1Hardware + d1_driver.py):
+    # moveit_config = MoveItConfigsBuilder(
+    #     "d1_550_description", package_name="d1_550_config"
+    # ).to_moveit_configs()
 
     # Switch ALL ROS2 nodes to FastDDS so CycloneDDS is only used by the
     # Unitree SDK inside d1_bridge — zero conflict between the two DDS stacks.
@@ -86,15 +93,15 @@ def generate_launch_description():
         "config",
         "cyclonedds.xml",
     )
-    d1_driver = Node(
-        package="d1_550_driver",
-        #executable="custom_d1_driver.py",
-        executable="d1_driver.py",
-        output="both",
-        # old enx00e04c681034
-        #additional_env={"D1_IFACE": "enx00e04c681205", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
-        additional_env={"D1_IFACE": "enx00e04c681205", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
-    )
+    #d1_driver = Node(
+    #    package="d1_550_driver",
+    #    #executable="custom_d1_driver.py",
+    #    executable="d1_driver.py",
+    #    output="both",
+    #    # old enx00e04c681034
+    #    #additional_env={"D1_IFACE": "enx00e04c681205", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
+    #    additional_env={"D1_IFACE": "enx00e04c681205", "CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
+    #)
 
     load_controllers = []
     for controller in [
@@ -110,6 +117,17 @@ def generate_launch_description():
             )
         ]
 
+    # C++ node with the Unitree SDK (ChannelFactory): serves /d1/follow_joint_trajectory
+    # and publishes the arm state. ChannelFactory::Init(0) takes the network
+    # interface from CYCLONEDDS_URI.
+    d1_controller = Node(
+        package="d1_550_driver",
+        executable="d1_controller_custom",
+        output="both",
+        remappings=[("/d1/joint_states", "/joint_states")],
+        additional_env={"CYCLONEDDS_URI": f"file://{cyclonedds_config}"},
+    )
+
     return LaunchDescription(
         [
             set_fastdds,
@@ -117,8 +135,11 @@ def generate_launch_description():
             static_tf,
             robot_state_publisher,
             run_move_group_node,
-            ros2_control_node,
-            d1_driver,
+            d1_controller,
+            # Previous setup, not launched: ros2_control_node (D1Hardware),
+            # d1_driver (d1_driver.py / d1_arm.py) and the controller spawners
+            # ros2_control_node,
+            # d1_driver,
         ]
-        + load_controllers
+        # + load_controllers
     )

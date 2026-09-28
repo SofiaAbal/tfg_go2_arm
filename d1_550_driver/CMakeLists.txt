@@ -10,6 +10,10 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(control_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 
 set(D1_SDK_SRC /home/sofi/Documents/unitree_d1_teleoperation/d1_sdk/src)
 
@@ -37,6 +41,26 @@ install(TARGETS d1_550_driver DESTINATION lib)
 #ament_target_dependencies(d1_bridge rclcpp sensor_msgs)
 #target_link_libraries(d1_bridge ddsc ddscxx pthread)
 #install(TARGETS d1_bridge DESTINATION lib/${PROJECT_NAME})
+
+# --- MoveIt node with the Unitree SDK (ChannelFactory), no ros2_control ---
+# ROS runs on FastDDS (RMW_IMPLEMENTATION=rmw_fastrtps_cpp in the launch) and the
+# rpath makes the SDK load its CycloneDDS from /usr/local/lib, not the one in /opt/ros.
+add_executable(d1_controller_custom
+  src/d1_controller_custom.cpp
+  src/msg/ArmString_.cpp
+  src/msg/PubServoInfo_.cpp
+)
+target_include_directories(d1_controller_custom PRIVATE
+  /usr/local/include        # unitree/, dds/dds.h
+  /usr/local/include/ddscxx # dds/dds.hpp
+)
+ament_target_dependencies(d1_controller_custom
+  rclcpp rclcpp_action control_msgs sensor_msgs std_srvs trajectory_msgs)
+target_link_directories(d1_controller_custom PRIVATE /usr/local/lib)
+target_link_libraries(d1_controller_custom unitree_sdk2 ddscxx ddsc pthread)
+target_link_options(d1_controller_custom PRIVATE
+  -Wl,--disable-new-dtags -Wl,-rpath,/usr/local/lib)
+install(TARGETS d1_controller_custom DESTINATION lib/${PROJECT_NAME})
 
 # Python bridge (uses bundled cyclonedds — no iceoryx conflict)
 install(PROGRAMS 
