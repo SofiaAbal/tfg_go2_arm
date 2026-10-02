@@ -7,6 +7,19 @@ namespace mtc = moveit::task_constructor;
 
 PickAndPlace::PickAndPlace(const rclcpp::Node::SharedPtr& node, const std::string& scene_setup)
 : node_(node) {
+  // Parámetros ajustables con el nodo en marcha, con el valor de constants.h por defecto.
+  // Si vienen de la línea de comandos o de un YAML el nodo ya los ha declarado
+  // (automatically_declare_parameters_from_overrides) y declararlos otra vez lanza una excepción
+  auto declare = [this](const char* name, double default_value) {
+    if (!node_->has_parameter(name)) {
+      node_->declare_parameter(name, default_value);
+    }
+  };
+  declare(PARAM_STRENGTH, STRENGTH);
+  declare(PARAM_GRASP_OFFSET, GRASP_OFFSET);
+  declare(PARAM_PUSH_STANDOFF, PUSH_STANDOFF);
+  declare(PARAM_PUSH_DEPTH, PUSH_DEPTH);
+
   if (scene_setup == SCENE_SETUP_DOG) {
     setupDogDown();
   } else if (scene_setup == SCENE_SETUP_TABLE) {
@@ -192,19 +205,29 @@ moveit_msgs::msg::CollisionObject defineTableLegBackRight() {
   return defineTableLeg(TABLE_LEG_BACK_RIGHT, 0.5, 0.9);
 }
 
+// Ángulo horizontal desde la base del brazo hasta el botón
+double pushYaw(const ObjectParams& params)
+{
+  return std::atan2(params.push_y, params.push_x);
+}
+
 moveit_msgs::msg::CollisionObject defineButton(const ObjectParams& params) {
   moveit_msgs::msg::CollisionObject object;
   object.id = BUTTON;
   object.header.frame_id = WORLD;
 
   object.primitives.resize(1);
-  setObjectData(object.primitives[0], ObjectParams{.shape=BOX, .dimension_x=0.05, .dimension_y=0.05, .dimension_z=0.05});
+  setObjectData(object.primitives[0], ObjectParams{.shape=BOX, .dimension_x=BUTTON_SIZE, .dimension_y=BUTTON_SIZE, .dimension_z=BUTTON_SIZE});
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = params.push_x;
   pose.position.y = params.push_y;
   pose.position.z = params.push_z;
-  pose.orientation.w = 1.0;
+
+  // Giramos el botón para que una de sus caras mire hacia el brazo
+  tf2::Quaternion q;
+  q.setRPY(0.0, 0.0, pushYaw(params));
+  pose.orientation = tf2::toMsg(q);
 
   /* object.pose = pose; */
   object.primitive_poses.push_back(pose);
@@ -344,7 +367,6 @@ bool PickAndPlace::doPushTask(const ObjectParams& params)
     return false;
   }
 
-
   if (!task_.plan(5)) {
     RCLCPP_ERROR(node_->get_logger(), ERROR_PLANNING_FAILED);
     return false;
@@ -386,17 +408,6 @@ bool PickAndPlace::doPickAndPlaceTask(const ObjectParams& params)
   return success;
 }
 
-bool PickAndPlace::doPickAndPlaceTaskOld(const ObjectParams& params)
-{
-  // Cada etapa se planifica y ejecuta contra la escena real, así que el place
-  // ya ve el objeto adherido que dejó el pick: no hace falta una Task combinada.
-  if (!doPickTask(params)) {
-    return false;
-  }
-
-  return doPlaceTask(params);
-}
-
 mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
 {
   mtc::Task task;
@@ -411,6 +422,10 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
   task.setProperty(GROUP_PROPERTY, arm_group_name);
   task.setProperty(EEF_PROPERTY, eef_name);
   task.setProperty(IK_FRAME_PROPERTY, hand_frame);
+
+  // Parámetros ajustables con el nodo en marcha (ros2 param set): se leen al crear cada tarea
+  const double grasp_offset = node_->get_parameter(PARAM_GRASP_OFFSET).as_double();
+  const double strength     = node_->get_parameter(PARAM_STRENGTH).as_double();
 
   mtc::Stage* current_state_ptr = nullptr;
   auto stage_state_current = std::make_unique<mtc::stages::CurrentState>(CURRENT_STATE_TASK);
@@ -502,7 +517,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       } else {
         Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
         grasp_frame_transform.rotate(rot_y);
-        grasp_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+        grasp_frame_transform.translation().x() = 0.10 + grasp_offset;
       }
 
     // Prohibimos colisión entre la mano y el objeto a manipular?
@@ -555,7 +570,7 @@ mtc::Task PickAndPlace::createPickTask(const ObjectParams& params)
       /* stage->setGoal(STAGE_GOAL_GRIPPER_CLOSED); */
 
       double object_width = (params.shape == BOX) ? params.dimension_y / 2 : params.dimension_y;
-      double grasp_width = 0.033 - object_width + STRENGTH;
+      double grasp_width = 0.033 - object_width + strength;
       // explicación-> 0: pinza en la esquina, 0.033: pinza se desplaza hacia el centro
 
         std::map<std::string, double> target;
@@ -636,6 +651,9 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
   task.setProperty(EEF_PROPERTY, eef_name);
   task.setProperty(IK_FRAME_PROPERTY, hand_frame);
 
+  // Parámetros ajustables con el nodo en marcha (ros2 param set): se leen al crear cada tarea
+  const double grasp_offset = node_->get_parameter(PARAM_GRASP_OFFSET).as_double();
+
   // planners
   auto sampling_planner = std::make_shared<mtc::solvers::PipelinePlanner>(node_);
   auto interpolation_planner = std::make_shared<mtc::solvers::JointInterpolationPlanner>();
@@ -702,14 +720,14 @@ mtc::Task PickAndPlace::createPlaceTask(const ObjectParams& params)
       } else {
         Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
         place_frame_transform.rotate(rot_y);
-        place_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+        place_frame_transform.translation().x() = 0.10 + grasp_offset;
       }
       
 
       /* if(params.pick_grasp == "top") {
         Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
         place_frame_transform.rotate(rot_y);
-        place_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+        place_frame_transform.translation().x() = 0.10 + grasp_offset;
       } else {
         place_frame_transform.translation().x() = 0.1;
       }    */   
@@ -807,9 +825,11 @@ mtc::Task PickAndPlace::createPushTask(const ObjectParams& params)
   task.setProperty(EEF_PROPERTY, eef_name);
   task.setProperty(IK_FRAME_PROPERTY, hand_frame);
 
-  mtc::Stage* current_state_ptr = nullptr;
+  // Parámetros ajustables con el nodo en marcha (ros2 param set): se leen al crear cada tarea
+  const double push_standoff = node_->get_parameter(PARAM_PUSH_STANDOFF).as_double();
+  const double push_depth    = node_->get_parameter(PARAM_PUSH_DEPTH).as_double();
+
   auto stage_state_current = std::make_unique<mtc::stages::CurrentState>(CURRENT_STATE_TASK);
-  current_state_ptr = stage_state_current.get();
   task.add(std::move(stage_state_current));
 
   auto sampling_planner = std::make_shared<mtc::solvers::PipelinePlanner>(node_);
@@ -820,34 +840,29 @@ mtc::Task PickAndPlace::createPushTask(const ObjectParams& params)
   cartesian_planner->setMaxAccelerationScalingFactor(1.0);
   cartesian_planner->setStepSize(0.0001);
 
-  // Abrimos la mano
-/*   auto stage_open_hand = std::make_unique<mtc::stages::MoveTo>(OPEN_HAND_STAGE, interpolation_planner);
-  stage_open_hand->setGroup(hand_group_name);
-  stage_open_hand->setGoal(STAGE_GOAL_GRIPPER_OPEN);
-  task.add(std::move(stage_open_hand)); */
-  
-  // Cerramos mano
+  // Cerramos la mano antes de movernos: se pulsa con la punta de la pinza cerrada, como con un dedo
+  mtc::Stage* close_hand_ptr = nullptr;
   auto stage_close_hand = std::make_unique<mtc::stages::MoveTo>(CLOSE_HAND_STAGE, interpolation_planner);
   stage_close_hand->setGroup(hand_group_name);
   stage_close_hand->setGoal(STAGE_GOAL_GRIPPER_CLOSED);
+  close_hand_ptr = stage_close_hand.get();
   task.add(std::move(stage_close_hand));
 
-  // Movemos el efector final cerca del objeto a manipular con un planificador de movimientos de robot (RRTConnect) ??
-  auto stage_move_to_pick = std::make_unique<mtc::stages::Connect>(MOVE_TO_PICK_STAGE,
+  // Movemos el brazo hasta delante del botón con un planificador de movimientos de robot (RRTConnect)
+  auto stage_move_to_push = std::make_unique<mtc::stages::Connect>(MOVE_TO_PUSH_STAGE,
     mtc::stages::Connect::GroupPlannerVector{ { arm_group_name, sampling_planner } });
-  stage_move_to_pick->setTimeout(30.0);
-  stage_move_to_pick->properties().configureInitFrom(mtc::Stage::PARENT);
-  task.add(std::move(stage_move_to_pick));
+  stage_move_to_push->setTimeout(30.0);
+  stage_move_to_push->properties().configureInitFrom(mtc::Stage::PARENT);
+  task.add(std::move(stage_move_to_push));
 
-  mtc::Stage* attach_object_stage = nullptr;
-
-  // Secuencia de etapas para aproximarse al objeto, agarrarlo, levantarlo y volver a la posicion inicial
+  // Secuencia de etapas para aproximarse al botón, pulsarlo (hundirlo) y soltarlo
+  // El eje x de la mano es la dirección de empuje: horizontal hacia el botón (side) o hacia abajo (top)
   {
-    auto grasp = std::make_unique<mtc::SerialContainer>(PUSH_OBJECT_CONTAINER);
-    task.properties().exposeTo(grasp->properties(), { EEF_PROPERTY, GROUP_PROPERTY, IK_FRAME_PROPERTY });
-    grasp->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY, IK_FRAME_PROPERTY });
+    auto push = std::make_unique<mtc::SerialContainer>(PUSH_OBJECT_CONTAINER);
+    task.properties().exposeTo(push->properties(), { EEF_PROPERTY, GROUP_PROPERTY, IK_FRAME_PROPERTY });
+    push->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY, IK_FRAME_PROPERTY });
 
-    // Aproximamos brazo a objeto a manipular
+    // Aproximamos la mano al botón en línea recta, en la dirección de empuje
     {
       auto stage =
           std::make_unique<mtc::stages::MoveRelative>(APPROACH_OBJECT_STAGE, cartesian_planner);
@@ -858,21 +873,57 @@ mtc::Task PickAndPlace::createPushTask(const ObjectParams& params)
       stage->setMinMaxDistance(0.01, 0.10);
 
       geometry_msgs::msg::Vector3Stamped vec;
-      if(params.push_grasp == "side") {
-        vec.header.frame_id = hand_frame;
-        vec.vector.x = 1.0;
-        vec.vector.y = 1.0;
-        vec.vector.z = 1.0;
-      } else {
-        vec.header.frame_id = WORLD;
-        vec.vector.z = -1.0;
-      }
+      vec.header.frame_id = hand_frame;
+      vec.vector.x = 1.0;
       stage->setDirection(vec);
 
-      grasp->insert(std::move(stage));
-    }   
+      push->insert(std::move(stage));
+    }
 
-      // Permitimos colisión entre la mano y el objeto a manipular para poder pulsarlo
+    // Generamos la pose previa al empuje: punta de la pinza a push_standoff de la cara del botón,
+    // perpendicular a ella. Todavía no lo toca, así que no necesita colisión permitida.
+    // Se genera desde el estado con la mano ya cerrada para que Connect enlace con él.
+    {
+      auto stage = std::make_unique<mtc::stages::GeneratePose>(GENERATE_PUSH_POSE_STAGE);
+      stage->properties().configureInitFrom(mtc::Stage::PARENT);
+      stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_PUSH_POSE);
+      stage->setMonitoredStage(close_hand_ptr);
+
+      tf2::Quaternion q;
+      if(params.push_grasp == "side") {
+        q.setRPY(0.0, 0.0, pushYaw(params));
+      } else {
+        q.setRPY(0.0, M_PI / 2, pushYaw(params));
+      }
+      q.normalize();
+
+      geometry_msgs::msg::PoseStamped target_pose_msg;
+      target_pose_msg.header.frame_id = WORLD;
+      target_pose_msg.pose.position.x = params.push_x;
+      target_pose_msg.pose.position.y = params.push_y;
+      target_pose_msg.pose.position.z = params.push_z;
+      target_pose_msg.pose.orientation = tf2::toMsg(q);
+      stage->setPose(target_pose_msg);
+
+      // El centro del botón queda a medio botón + push_standoff por delante de la punta
+      Eigen::Isometry3d push_frame_transform = Eigen::Isometry3d::Identity();
+      push_frame_transform.translation().x() = FINGERTIP_OFFSET + push_standoff + BUTTON_SIZE / 2;
+
+      auto wrapper = std::make_unique<mtc::stages::ComputeIK>(PUSH_POSE_IK_STAGE, std::move(stage));
+      wrapper->setMinSolutionDistance(0.1);
+      wrapper->setIKFrame(push_frame_transform, hand_frame);
+      wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY });
+      wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { STAGE_TARGET_POSE });
+
+      // mas solucions para mas probabilkidades de encontrar una buena
+      wrapper->setMaxIKSolutions(50);
+
+      push->insert(std::move(wrapper));
+    }
+
+    // Permitimos colisión entre la mano y el botón para poder tocarlo y hundirlo.
+    // Tiene que ir después de la pose generada: las etapas siguientes (push y retreat)
+    // parten de la escena de esa pose, y es ahí donde necesitan la colisión permitida.
     {
       auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
           ALLOW_COLLISIONS_HAND_BUTTON_STAGE);
@@ -884,65 +935,57 @@ mtc::Task PickAndPlace::createPushTask(const ObjectParams& params)
               ->getLinkModelNamesWithCollisionGeometry(),
           true);
 
-      grasp->insert(std::move(stage));
+      push->insert(std::move(stage));
     }
 
-    // Generamos pose de agarre
-    {
-      auto stage = std::make_unique<mtc::stages::GenerateGraspPose>(GENERATE_GRASP_POSE_STAGE);
-      stage->properties().configureInitFrom(mtc::Stage::PARENT);
-      stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_GRASP_POSE);
-      stage->setPreGraspPose(STAGE_PUSH_POSE);
-      stage->setObject(BUTTON);
-      stage->setMonitoredStage(current_state_ptr);
-
-      // Objetivo de IK a PUSH_STANDOFF por delante de la superficie del botón:
-      // así el estado generado no toca el objeto todavía y no necesita colisión
-      // permitida para ser válido. El contacto real lo hace la etapa "push stage".
-      Eigen::Isometry3d grasp_frame_transform = Eigen::Isometry3d::Identity();
-      if(params.push_grasp == "side") {
-        stage->setAngleDelta(M_PI / 12); //angulo más chiquito
-        grasp_frame_transform.translation().x() = 0.1 + GRASP_OFFSET + PUSH_STANDOFF;
-      } else {
-        Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
-        grasp_frame_transform.rotate(rot_y);
-        grasp_frame_transform.translation().x() = 0.10 + GRASP_OFFSET + PUSH_STANDOFF;
-      }
-
-      auto wrapper =std::make_unique<mtc::stages::ComputeIK>(GRASP_POSE_IK_STAGE, std::move(stage));
-      //wrapper->setMaxIKSolutions(if (params.push_grasp == "side" ? 8 : 50));
-      wrapper->setMinSolutionDistance(0.1);
-      wrapper->setIKFrame(grasp_frame_transform, hand_frame);
-      wrapper->properties().configureInitFrom(mtc::Stage::PARENT, { EEF_PROPERTY, GROUP_PROPERTY });
-      wrapper->properties().configureInitFrom(mtc::Stage::INTERFACE, { STAGE_TARGET_POSE });
-
-      // mas solucions para mas probabilkidades de encontrar una buena
-      wrapper->setMaxIKSolutions(50);
-
-      grasp->insert(std::move(wrapper));
-    }
-
-    // Avanzamos el puño cerrado el último tramo (PUSH_STANDOFF) para hacer
-    // contacto real con el botón. Esta etapa sí ve la colisión permitida por
-    // "allow collision (hand,button)", porque MoveRelative usa la escena de
-    // la etapa anterior de forma secuencial normal (a diferencia de
-    // GenerateGraspPose, que es un MonitoringGenerator).
+    // Pulsamos: la punta recorre el hueco hasta el botón y lo hunde push_depth
     {
       auto stage = std::make_unique<mtc::stages::MoveRelative>(PUSH_STAGE, cartesian_planner);
       stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_PUSH_OBJECT);
       stage->properties().set(STAGE_PROPERTIES_LINK, hand_frame);
       stage->properties().configureInitFrom(mtc::Stage::PARENT, { GROUP_PROPERTY });
-      stage->setMinMaxDistance(0.012, PUSH_STANDOFF + 0.01);
+      stage->setMinMaxDistance(push_standoff + push_depth / 2, push_standoff + push_depth);
 
       geometry_msgs::msg::Vector3Stamped vec;
       vec.header.frame_id = hand_frame;
       vec.vector.x = 1.0;
       stage->setDirection(vec);
 
-      grasp->insert(std::move(stage));
+      push->insert(std::move(stage));
     }
 
-    task.add(std::move(grasp));
+    // Soltamos el botón retrocediendo en línea recta por el mismo eje
+    {
+      auto stage = std::make_unique<mtc::stages::MoveRelative>(RETREAT_STAGE, cartesian_planner);
+      stage->properties().set(STAGE_PROPERTIES_MARKER_NS, STAGE_MARKER_NS_RETREAT);
+      stage->properties().set(STAGE_PROPERTIES_LINK, hand_frame);
+      stage->properties().configureInitFrom(mtc::Stage::PARENT, { GROUP_PROPERTY });
+      stage->setMinMaxDistance(push_standoff + push_depth, 0.10);
+
+      geometry_msgs::msg::Vector3Stamped vec;
+      vec.header.frame_id = hand_frame;
+      vec.vector.x = -1.0;
+      stage->setDirection(vec);
+
+      push->insert(std::move(stage));
+    }
+
+    // Prohibimos de nuevo la colisión mano-botón para el resto del movimiento
+    {
+      auto stage = std::make_unique<mtc::stages::ModifyPlanningScene>(
+          FORBID_COLLISIONS_HAND_BUTTON_STAGE);
+
+      stage->allowCollisions(
+          BUTTON,
+          task.getRobotModel()
+              ->getJointModelGroup(hand_group_name)
+              ->getLinkModelNamesWithCollisionGeometry(),
+          false);
+
+      push->insert(std::move(stage));
+    }
+
+    task.add(std::move(push));
   }
 
   // Volvemos a la posicion inicial de brazo recogido
@@ -970,6 +1013,10 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
   task.setProperty(GROUP_PROPERTY, arm_group_name);
   task.setProperty(EEF_PROPERTY, eef_name);
   task.setProperty(IK_FRAME_PROPERTY, hand_frame);
+
+  // Parámetros ajustables con el nodo en marcha (ros2 param set): se leen al crear cada tarea
+  const double grasp_offset = node_->get_parameter(PARAM_GRASP_OFFSET).as_double();
+  const double strength     = node_->get_parameter(PARAM_STRENGTH).as_double();
 
   mtc::Stage* current_state_ptr = nullptr;
   auto stage_state_current = std::make_unique<mtc::stages::CurrentState>(CURRENT_STATE_TASK);
@@ -1046,7 +1093,7 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
       } else {
         Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
         grasp_frame_transform.rotate(rot_y);
-        grasp_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+        grasp_frame_transform.translation().x() = 0.10 + grasp_offset;
       }
 
       auto wrapper =std::make_unique<mtc::stages::ComputeIK>(GRASP_POSE_IK_STAGE, std::move(stage));
@@ -1081,7 +1128,7 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
       stage->setGroup(hand_group_name);
 
       double object_width = (params.shape == BOX) ? params.dimension_y / 2 : params.dimension_y;
-      double grasp_width = 0.033 - object_width + STRENGTH;
+      double grasp_width = 0.033 - object_width + strength;
       // explicación-> 0: pinza en la esquina, 0.033: pinza se desplaza hacia el centro
 
         std::map<std::string, double> target;
@@ -1178,7 +1225,7 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
       } else {
         Eigen::AngleAxisd rot_y(-M_PI/2, Eigen::Vector3d::UnitY());
         place_frame_transform.rotate(rot_y);
-        place_frame_transform.translation().x() = 0.10 + GRASP_OFFSET;
+        place_frame_transform.translation().x() = 0.10 + grasp_offset;
       }
 
       auto wrapper = std::make_unique<mtc::stages::ComputeIK>(PLACE_POSE_IK_STAGE, std::move(stage));
@@ -1263,21 +1310,4 @@ mtc::Task PickAndPlace::createPickAndPlaceTask(const ObjectParams& params)
   }
 
   return task;
-}
-
-bool PickAndPlace::planPickTask(const ObjectParams& params)
-{
-  // Task local: no tocamos el miembro task_ ni su introspección,
-  // para no interferir con una tarea real en curso.
-  mtc::Task task = createPickTask(params);
-
-  try {
-    task.init();
-  } catch (mtc::InitStageException& e) {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), e);
-    return false;
-  }
-
-  // Basta una solución para saber si el punto es alcanzable.
-  return static_cast<bool>(task.plan(1));
 }

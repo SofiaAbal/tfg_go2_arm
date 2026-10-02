@@ -241,53 +241,6 @@ int main(int argc, char** argv)
 
   RCLCPP_INFO(LOGGER, "Servicio pick_place_object activo. Esperando parámetros del objeto...");
 
-  /* auto servicePlanPick = node->create_service<d1_550_config::srv::PickObject>("plan_pick_object",
-      [&](const std::shared_ptr<d1_550_config::srv::PickObject::Request> request,
-      std::shared_ptr<d1_550_config::srv::PickObject::Response> response)
-      {
-        RCLCPP_INFO(LOGGER,
-            "Request: 'pick(%.2f, %.2f, %.2f) - shape: %s' - dimensions(%.2f, %.2f, %.2f) - grasp: %s",
-            request->pick_x, request->pick_y, request->pick_z,
-            request->shape.c_str(),
-            request->dimension_x, request->dimension_y, request->dimension_z,
-            request->pick_grasp.c_str()
-          );
-
-        try
-        {
-          ObjectParams params {
-          .pick_x  = request->pick_x,
-          .pick_y  = request->pick_y,
-          .pick_z  = request->pick_z,
-          .shape   = request->shape,
-          .dimension_x = request->dimension_x,
-          .dimension_y = request->dimension_y,
-          .dimension_z = request->dimension_z,
-          .rot_x = request->rot_x,
-          .rot_y = request->rot_y,
-          .rot_z = request->rot_z,
-          .pick_grasp = request->pick_grasp
-          };
-
-          // Sin comprobación de hasObject(): el modo plan-only no
-          // consume ni produce objeto real.
-          pick_place_task->normalizeShape(params);
-          pick_place_task->setupPlanningScene(params);
-          response->success = pick_place_task->planPickTask(params);
-          response->message = response->success
-              ? "Punto alcanzable (plan-only)"
-              : "Punto no alcanzable (plan-only)";
-        }
-        catch(const std::exception& e)
-        {
-          response->success = false;
-          response->message = e.what();
-        }
-        RCLCPP_INFO(LOGGER, "Response: [%s] %s", response->success ? "OK" : "FAIL", response->message.c_str());
-      });
-
-  RCLCPP_INFO(LOGGER, "Servicio plan_pick_object activo (modo plan-only)."); */
-
   /* spin_thread.join(); */
 
   executor.spin();
