@@ -1,0 +1,5 @@
+<library path="d1_550_driver">
+  <class name="d1_550_driver/D1Hardware"
+         type="d1_550_driver::D1Hardware"
+         base_class_type="hardware_interface::SystemInterface"/>
+</library>

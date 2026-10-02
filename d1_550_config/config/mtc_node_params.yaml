@@ -1,0 +1,10 @@
+# Parámetros ajustables del nodo pick_and_place_node, para cargarlos con el nodo en marcha:
+#   ros2 param load /pick_and_place_node ~/ws_tfg/src/tfg_go2_arm/d1_550_config/config/mtc_node_params.yaml
+# Los valores con los que arranca el nodo son los de include/utils/constants.h.
+# Siempre con punto decimal (0.0, no 0): son parámetros double.
+/**:
+  ros__parameters:
+    strength: 0.003       # m que cada dedo se cierra de más sobre el objeto para apretarlo
+    grasp_offset: 0.05    # m extra entre Empty_Link6 y el centro del objeto en el agarre top (pick y place)
+    push_standoff: 0.02   # m entre la punta de la pinza y el botón antes de empujar
+    push_depth: 0.01      # m que se hunde la punta dentro del botón

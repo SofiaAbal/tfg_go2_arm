@@ -1,0 +1,31 @@
+# MoveIt controller config for the standalone d1_controller_custom node
+# (no ros2_control). A single controller "d1" covers arm + gripper; MoveIt
+# sends it trajectories with the arm joints or the gripper joints only.
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+trajectory_execution:
+  # d1_controller_custom waits up to SETTLE_TIMEOUT (10 s) for the real arm to
+  # reach the last point, plus PAUSE_AFTER_TRAJECTORY (0.5 s), before reporting success
+  allowed_goal_duration_margin: 12.0
+  # Same value as STOPPED_TOLERANCE in d1_controller_custom (~4 deg), so a
+  # trajectory that "arrived" is a valid start for the next one
+  allowed_start_tolerance: 0.07
+
+moveit_simple_controller_manager:
+  controller_names:
+    - d1
+
+  d1:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory  # -> /d1/follow_joint_trajectory
+    default: true
+    joints:
+      - Joint1
+      - Joint2
+      - Joint3
+      - Joint4
+      - Joint5
+      - Joint6
+      - Joint_L
+      - Joint_R

@@ -1,6 +1,7 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from moveit_configs_utils import MoveItConfigsBuilder
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     moveit_config = MoveItConfigsBuilder("d1_550_description", package_name="d1_550_config").to_moveit_configs()
@@ -12,6 +13,7 @@ def generate_launch_description():
         output="screen",
         parameters=[
             moveit_config.to_dict(),
+            {"scene_setup": LaunchConfiguration("scene_setup")},
         ],
     )
 

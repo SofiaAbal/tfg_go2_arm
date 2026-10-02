@@ -35,6 +35,14 @@
         <joint name="Joint5" value="0"/>
         <joint name="Joint6" value="0"/>
     </group_state>
+    <group_state name="arm_test" group="d1_arm">
+        <joint name="Joint1" value="0"/>
+        <joint name="Joint2" value="0"/>
+        <joint name="Joint3" value="0"/>
+        <joint name="Joint4" value="0"/>
+        <joint name="Joint5" value="-1.4"/>
+        <joint name="Joint6" value="0"/>
+    </group_state>
     <group_state name="arm_start" group="d1_arm">
         <joint name="Joint1" value="0"/>
         <joint name="Joint2" value="-1.57"/>
@@ -56,6 +64,16 @@
         <joint name="Joint_R" value="0"/>
     </group_state>
     <group_state name="gripper_closed" group="d1_gripper">
+        <joint name="Joint_L" value="0.033"/>
+        <joint name="Joint_R" value="0.033"/>
+    </group_state>
+    <group_state name="arm_pose_1" group="d1_full">
+        <joint name="Joint1" value="0"/>
+        <joint name="Joint2" value="1.012"/>
+        <joint name="Joint3" value="0.349"/>
+        <joint name="Joint4" value="0"/>
+        <joint name="Joint5" value="-1.344"/>
+        <joint name="Joint6" value="0"/>
         <joint name="Joint_L" value="0.033"/>
         <joint name="Joint_R" value="0.033"/>
     </group_state>

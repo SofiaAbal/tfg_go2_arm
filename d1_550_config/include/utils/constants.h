@@ -12,7 +12,8 @@ static constexpr const char* SPHERE = "SPHERE";
 
 // Scene objects
 static constexpr const char* DOG = "dog";
-static constexpr const char* GROUND = "ground"; 
+static constexpr const char* GROUND = "ground";
+static constexpr const char* GROUND_TABLE = "ground_table";
 static constexpr const char* OBJECT = "object";
 static constexpr const char* WORLD = "world";
 static constexpr const char* BUTTON = "button";
@@ -38,6 +39,7 @@ static constexpr const char* PICK_TASK = "pick task";
 static constexpr const char* PLACE_TASK = "place task";
 static constexpr const char* CURRENT_STATE_TASK = "current";
 static constexpr const char* PUSH_TASK = "push task";
+static constexpr const char* PICK_AND_PLACE_TASK = "pick and place task";
 
 // Stages
 static constexpr const char* OPEN_HAND_STAGE = "open hand";
@@ -61,6 +63,8 @@ static constexpr const char* FORBID_COLLISIONS_HAND_OBJECT_STAGE = "forbid colli
 static constexpr const char* FORBID_COLLISIONS_HAND_BUTTON_STAGE = "forbid collision (hand,button)";
 static constexpr const char* DETACH_OBJECT_STAGE = "detach object";
 static constexpr const char* PUSH_STAGE = "push stage";
+static constexpr const char* GENERATE_PUSH_POSE_STAGE = "generate push pose";
+static constexpr const char* PUSH_POSE_IK_STAGE = "push pose IK";
 
 // Properties
 static constexpr const char* STAGE_PROPERTIES_MARKER_NS = "marker_ns";
@@ -72,10 +76,10 @@ static constexpr const char* STAGE_MARKER_NS_LIFT_OBJECT = "lift_object";
 static constexpr const char* STAGE_MARKER_NS_PLACE_POSE = "place_pose";
 static constexpr const char* STAGE_MARKER_NS_RETREAT = "retreat";
 static constexpr const char* STAGE_MARKER_NS_PUSH_OBJECT = "push_object";
+static constexpr const char* STAGE_MARKER_NS_PUSH_POSE = "push_pose";
 
 static constexpr const char* STAGE_TARGET_POSE = "target_pose";
 static constexpr const char* STAGE_GRASP_POSE = "gripper_open";
-static constexpr const char* STAGE_PUSH_POSE = "gripper_closed";
 
 static constexpr const char* STAGE_GOAL_GRIPPER_OPEN = "gripper_open";
 static constexpr const char* STAGE_GOAL_GRIPPER_CLOSED = "gripper_closed";
@@ -93,5 +97,21 @@ static constexpr const char* JOINT_L = "Joint_L";
 static constexpr const char* JOINT_R = "Joint_R";
 
 // Values
+// STRENGTH, GRASP_OFFSET, PUSH_STANDOFF y PUSH_DEPTH son solo el valor por defecto de su parámetro (ver Parameters)
 static constexpr double STRENGTH = 0.003;
 static constexpr double GRASP_OFFSET = 0.05;
+static constexpr double BUTTON_SIZE = 0.05;      // lado del cubo que representa el botón en la escena
+static constexpr double FINGERTIP_OFFSET = 0.13; // de Empty_Link6 a la punta de la pinza cerrada en x (URDF: 0.0718 + 0.0568)
+static constexpr double PUSH_STANDOFF = 0.02;    // hueco entre la punta y el botón antes de empujar
+static constexpr double PUSH_DEPTH = 0.01;       // cuánto se hunde la punta dentro del botón
+
+// Parameters: se pueden cambiar con el nodo en marcha (ros2 param set) y se leen al crear cada tarea
+static constexpr const char* PARAM_STRENGTH = "strength";
+static constexpr const char* PARAM_GRASP_OFFSET = "grasp_offset";
+static constexpr const char* PARAM_PUSH_STANDOFF = "push_standoff";
+static constexpr const char* PARAM_PUSH_DEPTH = "push_depth";
+
+// Scene setup
+static constexpr const char* PARAM_SCENE_SETUP = "scene_setup";
+static constexpr const char* SCENE_SETUP_TABLE = "table";
+static constexpr const char* SCENE_SETUP_DOG   = "dog";
