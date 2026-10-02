@@ -49,9 +49,7 @@ public:
   void setupTable();
   void setupExtraObstacles();
   bool doPickAndPlaceTask(const ObjectParams& params);
-  bool doPickAndPlaceTaskOld(const ObjectParams& params);
   bool doPickTask(const ObjectParams& params);
-  bool planPickTask(const ObjectParams& params);
   bool doPlaceTask(const ObjectParams& params);
   bool hasObject() const { return has_object_; }
   void setupPushScene(const ObjectParams& params);
