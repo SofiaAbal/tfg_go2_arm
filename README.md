@@ -75,7 +75,7 @@ source install/setup.bash
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.3, pick_y: 0.4, pick_z: -0.05, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, rot_x: 3, rot_y: -1, rot_z: 0.2, pick_grasp: side}"
 ```
 
-- Servicio PickObject (side pick con nesa)
+- Servicio PickObject (side pick con mesa)
 ```
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: -0.2, pick_y: 0.5, pick_z: 0.2, shape: boX, dimension_x: 0.02, dimension_y: 0.02, dimension_z: 0.1, pick_grasp: side}"
 ```
@@ -100,7 +100,7 @@ ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.0, pick_
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: -0.3, place_z: -0.05, place_grasp: top}"
 ```
 
-- Servicio PlaceObject (top pick)
+- Servicio PlaceObject (top place)
 ```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: 0.3, place_z: -0.1, place_grasp: top}"
 ```
@@ -143,55 +143,69 @@ Añadido nuevo parámetro de arranque para establecer el lugar sobre el que apoy
 
 
 ### Comandos válidos
-/// mesa
 
-// side grasp enfrente
-
+- mesa: side grasp enfrente
+```
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.4, pick_y: 0, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: side}"
+```
 
+```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.4, place_y: 0, place_z: 0.1, place_grasp: side}"
+```
 
-// side grasp lateral
-
+- mesa: side grasp lateral
+```
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.0, pick_y: 0.3, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: side}"
+```
 
+```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.0, place_y: -0.4, place_z: 0.05, place_grasp: side}"
+```
 
-
-// top graps enfrente
-
+- mesa: top graps enfrente
+```
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.1, pick_y: 0, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: top}"
+```
 
+```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: 0, place_z: 0.05, place_grasp: top}"
+```
 
-// top grasps lateral
+- mesa: top grasps lateral
 
+```
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0.1, pick_y: 0.2, pick_z: 0.05, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, pick_grasp: top}"
+```
 
+```
 ros2 service call /place_object d1_550_config/srv/PlaceObject "{place_x: 0.2, place_y: -0.2, place_z: 0.05, place_grasp: top}"
+```
 
-/// perro
-
+- perro
+```
 ros2 service call /pick_object d1_550_config/srv/PickObject "{pick_x: 0, pick_y: 0.3, pick_z: 0.1, shape: cylinder, dimension_x: 0.08, dimension_y: 0.01, pick_grasp: side}"
+```
 
 
 
-
-///// pick and place
-
+- mesa: pick and place
+```
 ros2 service call /pick_and_place_object d1_550_config/srv/PickAndPlaceObject "{pick_x: 0.4, pick_y: 0, pick_z: 0.1, shape: cylinder, dimension_x: 0.09, dimension_y: 0.025, grasp: side}"
+```
 
 
 
-
-//////// push service
+- mesa: push service
+```
 ros2 service call /push_object d1_550_config/srv/PushObject "{push_x: 0.3, push_y: 0, push_z: 0.2, push_grasp: side}"
+```
 
+```
 ros2 service call /push_object d1_550_config/srv/PushObject "{push_x: 0.3, push_y: 0, push_z: 0.1, push_grasp: top}"
+```
 
 
 ## Errores conocidos
-## TODO: revision respuesta claude
 
 ### Errores pendientes de corregir
 
@@ -211,6 +225,7 @@ Driver (`d1_controller_custom`):
 - **Joints por posición, no por nombre.** Una trayectoria de 2 joints se trata como pinza y el resto como brazo en orden Joint1..Joint6. Funciona porque MoveIt manda los joints en el orden del modelo.
 - **Ejecución en un hilo desacoplado (`detach`).** Apagar el nodo con el brazo en movimiento puede dar un cierre sucio, y dos goals casi simultáneos podrían aceptarse a la vez (en la práctica MoveIt los manda de uno en uno). Heredado del driver original.
 - **El feedback de la acción** no sigue el orden ni las unidades de los joints del goal. MoveIt no lo usa.
+- **Sin secuencia de apagado.** Al cerrar el nodo los motores del brazo y de la pinza siguen activos y el brazo se queda en su última posición. Es intencionado: desactivarlos sin más haría que el brazo cayera por su peso. Mejora: al apagar, llevar el brazo a la pose de reposo y después desactivar los motores.
 
 Tareas MTC:
 - **Estado del objeto tras un fallo.** `has_object_` solo cambia cuando un pick o un place terminan bien, y `pick_and_place_object` no lo toca. Si una ejecución falla a mitad con el objeto en la pinza, el nodo cree que no lo tiene. Mejora: consultar en la planning scene si el objeto está adherido al brazo.
